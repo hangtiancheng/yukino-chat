@@ -1,0 +1,85 @@
+# Copyright (c) 2026 hangtiancheng
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+name: yukino-chat
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test:
+        ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  server:
+    build:
+      context: .
+      target: server
+      # args:
+      #   GOPROXY: https://proxy.golang.org,direct
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "${SERVER_PORT:-8000}:8000"
+    volumes:
+      # Chat server config (port, mongo, jwt secret, static paths).
+      - ./docker/config.docker.json:/app/config.json:ro
+      # Yukino agent providers + permission mode. Create it first:
+      #   cp docker/yukino.config.example.yaml docker/yukino.config.yaml
+      - ./docker/yukino.config.yaml:/root/.yukino/config.yaml:ro
+      # Uploaded avatars / files / chunks.
+      - static-data:/app/static
+      # Per-user agent workspaces, transcripts and skills (.yukino/chat/<uid>).
+      - yukino-data:/app/.yukino
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "8000"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  web:
+    build:
+      context: .
+      target: web
+      args:
+        # Baked into the bundle at build time. Point it at wherever the
+        # browser can reach the server container; rebuild after changing it:
+        #   VITE_API_URL=https://your-host:8000 docker compose build web
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-8081}:80"
+
+volumes:
+  mongo-data:
+  static-data:
+  yukino-data:

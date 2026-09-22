@@ -1,0 +1,11 @@
+allowBuilds:
+  '@bufbuild/buf': true
+  esbuild: true
+  protobufjs: true
+
+minimumReleaseAgeExclude:
+  - "@yukino.js/sentry@0.0.1"
+
+packages:
+  - browser
+  - terminal

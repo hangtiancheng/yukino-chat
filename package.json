@@ -1,0 +1,11 @@
+{
+  "name": "yukino-chat",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "add:licenses": "node scripts/add-licenses.js",
+    "git:commit": "git add -A && git commit -m \"feat: Introduce new features\"",
+    "git:push": "pnpm git:commit && git push origin main"
+  }
+}
