@@ -1,11 +1,12 @@
 allowBuilds:
-  '@bufbuild/buf': true
+  '@prisma/engines': true
   esbuild: true
+  prisma: true
   protobufjs: true
 
 minimumReleaseAgeExclude:
   - "@yukino.js/sentry@0.0.1"
 
 packages:
-  - browser
-  - terminal
+  - client
+  - server2
