@@ -1,5 +1,5 @@
 allowBuilds:
-  '@prisma/engines': true
+  "@prisma/engines": true
   esbuild: true
   prisma: true
   protobufjs: true
@@ -9,4 +9,4 @@ minimumReleaseAgeExclude:
 
 packages:
   - client
-  - server2
+  - server

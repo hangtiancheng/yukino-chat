@@ -1,6 +1,0 @@
-# Built binaries (e.g. the yukino-agent RPC server used for local smoke tests).
-/bin-yukino-agent
-*.exe
-
-# Runtime state the standalone server writes under a workspace.
-/.yukino/chat/
