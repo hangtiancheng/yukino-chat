@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Chat domain status/type columns are plain Ints: the wire sends raw ints and
+// the Go semantics (e.g. contact statuses 0-7) are load-bearing. PG enums are
+// only used for agent-internal state.
+
+model UserInfo {
+  id            Int       @id @default(autoincrement())
+  uuid          String    @unique @db.VarChar(32)
+  telephone     String    @db.VarChar(32)
+  nickname      String    @default("") @db.VarChar(128)
+  email         String    @default("") @db.VarChar(128)
+  avatar        String    @default("") @db.VarChar(512)
+  gender        Int       @default(0)
+  signature     String    @default("") @db.VarChar(512)
+  password      String    @default("") @db.VarChar(128)
+  birthday      String    @default("") @db.VarChar(32)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  lastOnlineAt  DateTime? @map("last_online_at")
+  lastOfflineAt DateTime? @map("last_offline_at")
+  isAdmin       Int       @default(0) @map("is_admin")
+  status        Int       @default(0)
+
+  @@index([telephone], map: "idx_user_info_telephone")
+  @@map("user_info")
+}
+
+model Session {
+  id            Int       @id @default(autoincrement())
+  uuid          String    @unique @db.VarChar(32)
+  sendId        String    @map("send_id") @db.VarChar(32)
+  receiveId     String    @map("receive_id") @db.VarChar(32)
+  receiveName   String    @default("") @map("receive_name") @db.VarChar(128)
+  avatar        String    @default("") @db.VarChar(512)
+  lastMessage   String    @default("") @map("last_message") @db.Text
+  lastMessageAt DateTime? @map("last_message_at")
+  lastReadAt    DateTime? @map("last_read_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  @@index([sendId, receiveId], map: "idx_session_send_receive")
+  @@index([receiveId], map: "idx_session_receive")
+  @@map("session")
+}
+
+model Message {
+  id         Int       @id @default(autoincrement())
+  uuid       String    @unique @db.VarChar(32)
+  sessionId  String    @map("session_id") @db.VarChar(32)
+  type       Int
+  content    String    @default("") @db.Text
+  url        String    @default("") @db.VarChar(512)
+  sendId     String    @map("send_id") @db.VarChar(32)
+  sendName   String    @default("") @map("send_name") @db.VarChar(128)
+  sendAvatar String    @default("") @map("send_avatar") @db.VarChar(512)
+  receiveId  String    @map("receive_id") @db.VarChar(32)
+  fileType   String    @default("") @map("file_type") @db.VarChar(64)
+  fileName   String    @default("") @map("file_name") @db.VarChar(255)
+  fileSize   String    @default("") @map("file_size") @db.VarChar(32)
+  status     Int       @default(0)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  sendAt     DateTime? @map("send_at")
+  avData     String    @default("") @map("av_data") @db.Text
+
+  @@index([sendId, receiveId, createdAt], map: "idx_message_send_receive_created")
+  @@index([receiveId, createdAt], map: "idx_message_receive_created")
+  @@map("message")
+}
+
+model GroupInfo {
+  id        Int       @id @default(autoincrement())
+  uuid      String    @unique @db.VarChar(32)
+  name      String    @db.VarChar(128)
+  notice    String    @default("") @db.Text
+  members   String[]
+  memberCnt Int       @default(0) @map("member_cnt")
+  ownerId   String    @map("owner_id") @db.VarChar(32)
+  addMode   Int       @default(0) @map("add_mode")
+  avatar    String    @default("") @db.VarChar(512)
+  status    Int       @default(0)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@index([ownerId], map: "idx_group_info_owner")
+  @@map("group_info")
+}
+
+model UserContact {
+  id          Int       @id @default(autoincrement())
+  userId      String    @map("user_id") @db.VarChar(32)
+  contactId   String    @map("contact_id") @db.VarChar(32)
+  contactType Int       @default(0) @map("contact_type")
+  status      Int       @default(0)
+  noteName    String    @default("") @map("note_name") @db.VarChar(128)
+  tagId       String    @default("") @map("tag_id") @db.VarChar(32)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  @@index([userId, contactId], map: "idx_user_contact_pair")
+  @@index([contactId], map: "idx_user_contact_contact")
+  @@map("user_contact")
+}
+
+model ContactApply {
+  id          Int       @id @default(autoincrement())
+  uuid        String    @unique @db.VarChar(32)
+  userId      String    @map("user_id") @db.VarChar(32)
+  contactId   String    @map("contact_id") @db.VarChar(32)
+  contactType Int       @default(0) @map("contact_type")
+  status      Int       @default(0)
+  message     String    @default("") @db.VarChar(512)
+  lastApplyAt DateTime  @default(now()) @map("last_apply_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  @@index([contactId, status], map: "idx_contact_apply_contact_status")
+  @@index([userId, contactId], map: "idx_contact_apply_pair")
+  @@map("contact_apply")
+}
+
+model ContactTag {
+  id        Int       @id @default(autoincrement())
+  uuid      String    @unique @db.VarChar(32)
+  userId    String    @map("user_id") @db.VarChar(32)
+  name      String    @db.VarChar(64)
+  createdAt DateTime  @default(now()) @map("created_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@index([userId], map: "idx_contact_tag_user")
+  @@map("contact_tag")
+}
+
+enum AgentSessionStatus {
+  IDLE
+  RUNNING
+  WAITING
+  COMPLETED
+  ABORTED
+  FAILED
+}
+
+model AgentSession {
+  id             String             @id @default(uuid()) @db.Uuid
+  userId         String             @unique @map("user_id") @db.VarChar(32)
+  status         AgentSessionStatus @default(IDLE)
+  context        Json               @default("{}")
+  activeSkills   Json               @default("[]") @map("active_skills")
+  permissionMode String             @default("default") @map("permission_mode") @db.VarChar(32)
+  createTime     DateTime           @default(now()) @map("create_time")
+  updateTime     DateTime           @updatedAt @map("update_time")
+  lastActiveTime DateTime           @default(now()) @map("last_active_time")
+  completedTime  DateTime?          @map("completed_time")
+
+  @@index([userId, updateTime], map: "idx_agent_sessions_user_update")
+  @@map("agent_sessions")
+}
