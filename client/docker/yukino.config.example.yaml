@@ -11,7 +11,7 @@ providers:
   - name: ds-anthropic
     protocol: anthropic
     base_url: https://api.deepseek.com/anthropic # REQUIRED, string — API endpoint
-    model: "deepseek-v4-flash"
+    model: "deepseek-flash"
     api_key: "sk-REPLACE-ME" # optional, string, default: falls back to env var
     thinking: true # optional, boolean, default: false — enable extended thinking
     context_window:
@@ -21,7 +21,7 @@ providers:
   - name: ds-openai
     protocol: openai
     base_url: https://api.deepseek.com # REQUIRED, string — API endpoint
-    model: "deepseek-v4-flash"
+    model: "deepseek-flash"
     api_key: "sk-REPLACE-ME" # optional, string, default: falls back to env var
     thinking: true # optional, boolean, default: false — enable extended thinking
     context_window:
