@@ -11,7 +11,6 @@ import {
 } from "@/utils/rtc";
 import { showToast } from "@/utils/toast";
 
-/** Give up on an unanswered outgoing call rather than ringing forever. */
 const NO_ANSWER_TIMEOUT_MS = 45_000;
 
 export type CallPhase = "idle" | "ringing" | "dialing" | "active";
@@ -20,14 +19,12 @@ export interface CallState {
   phase: CallPhase;
   media: CallMedia;
   kind: CallKind;
-  /** Who is being called, or who is calling. */
   title: string;
   roomId: string;
   incoming: IncomingCall | null;
   localStream: MediaStream | null;
   peers: CallPeer[];
   microphoneOn: boolean;
-  /** Epoch ms the call connected, for the on-screen duration. */
   connectedAt: number | null;
 
   dial: (options: {
@@ -52,8 +49,6 @@ const idle = {
   connectedAt: null,
 } satisfies Partial<CallState>;
 
-// One manager for the whole app: it owns peer connections and media tracks,
-// which must not live in React state.
 const manager = new CallManager();
 let noAnswerTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -138,8 +133,6 @@ manager.onEnded = (reason) => {
   if (reason) showToast(reason, "info");
 };
 
-// Subscribed at module load so a call can ring on any page, not just the
-// conversation it belongs to.
 useWsStore.getState().subscribeToSignals((frame) => {
   const outcome = manager.handleSignal(frame);
   if (!outcome) return;

@@ -33,7 +33,11 @@ interface GroupSettingsDialogProps {
   groupId: string;
 }
 
-export function GroupSettingsDialog({ open, onOpenChange, groupId }: GroupSettingsDialogProps) {
+export function GroupSettingsDialog({
+  open,
+  onOpenChange,
+  groupId,
+}: GroupSettingsDialogProps) {
   const queryClient = useQueryClient();
   const [addMode, setAddMode] = useState<number>(-1);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -106,7 +110,11 @@ export function GroupSettingsDialog({ open, onOpenChange, groupId }: GroupSettin
         >
           <form.Field name="name">
             {(field) => (
-              <FormField label="Group Name" htmlFor="group-name" errors={field.state.meta.errors}>
+              <FormField
+                label="Group Name"
+                htmlFor="group-name"
+                errors={field.state.meta.errors}
+              >
                 <Input
                   id="group-name"
                   placeholder={info.data?.name || "3-10 characters"}
@@ -120,7 +128,11 @@ export function GroupSettingsDialog({ open, onOpenChange, groupId }: GroupSettin
 
           <form.Field name="notice">
             {(field) => (
-              <FormField label="Notice" htmlFor="group-notice" errors={field.state.meta.errors}>
+              <FormField
+                label="Notice"
+                htmlFor="group-notice"
+                errors={field.state.meta.errors}
+              >
                 <Textarea
                   id="group-notice"
                   rows={3}
@@ -168,14 +180,19 @@ export function GroupSettingsDialog({ open, onOpenChange, groupId }: GroupSettin
               <input {...getInputProps()} />
               {avatarFile ? (
                 <Avatar className="size-9">
-                  <AvatarImage src={URL.createObjectURL(avatarFile)} alt={avatarFile.name} />
+                  <AvatarImage
+                    src={URL.createObjectURL(avatarFile)}
+                    alt={avatarFile.name}
+                  />
                   <AvatarFallback>?</AvatarFallback>
                 </Avatar>
               ) : (
                 <ImageUp className="text-muted-foreground size-5" />
               )}
               <span className="text-muted-foreground truncate text-xs">
-                {avatarFile ? avatarFile.name : "Drop an image here, or click to choose one"}
+                {avatarFile
+                  ? avatarFile.name
+                  : "Drop an image here, or click to choose one"}
               </span>
             </div>
           </div>
@@ -184,7 +201,12 @@ export function GroupSettingsDialog({ open, onOpenChange, groupId }: GroupSettin
             <Button type="submit" size="sm" disabled={save.isPending}>
               {save.isPending ? "Saving…" : "Save"}
             </Button>
-            <Button type="button" size="sm" variant="ghost" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
           </DialogFooter>

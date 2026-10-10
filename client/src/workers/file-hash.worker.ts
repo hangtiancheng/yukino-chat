@@ -1,13 +1,3 @@
-// A worker so hashing a multi-gigabyte file never blocks the UI thread.
-//
-// Web Crypto has no incremental digest, and hashing a whole 2 GB file in one
-// call would need the entire thing resident as an ArrayBuffer. Instead each
-// slice is digested on its own and the digests are digested again, which keeps
-// exactly one slice in memory and still yields a stable content address.
-
-// `self` is the worker scope here, not a Window. Declaring the two members
-// this file uses shadows the DOM global without pulling the webworker lib into
-// the whole project, and types postMessage against the response union.
 declare const self: {
   postMessage: (message: HashResponse) => void;
   onmessage: ((event: MessageEvent<HashRequest>) => void) | null;
@@ -23,7 +13,9 @@ export type HashResponse =
   | { kind: "done"; hash: string }
   | { kind: "error"; message: string };
 
-const BYTE_TO_HEX = Array.from({ length: 256 }, (_, byte) => byte.toString(16).padStart(2, "0"));
+const BYTE_TO_HEX = Array.from({ length: 256 }, (_, byte) =>
+  byte.toString(16).padStart(2, "0"),
+);
 
 function toHex(bytes: Uint8Array): string {
   let hex = "";
@@ -56,7 +48,8 @@ self.onmessage = async (event: MessageEvent<HashRequest>) => {
   } catch (error) {
     self.postMessage({
       kind: "error",
-      message: error instanceof Error ? error.message : "failed to hash the file",
+      message:
+        error instanceof Error ? error.message : "failed to hash the file",
     });
   }
 };

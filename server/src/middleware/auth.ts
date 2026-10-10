@@ -26,8 +26,6 @@ export function tokenUUID(c: Context<AppEnv>): string {
   return c.get("uuid") ?? "";
 }
 
-// WS handshakes carry their token in the query string (browsers cannot set
-// headers during an upgrade). Returns the uuid or null.
 export function wsTokenUUID(c: Context): string | null {
   const claims = parseToken(c.req.query("token") ?? "", env.JWT_SECRET);
   return claims?.uuid ?? null;

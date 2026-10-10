@@ -16,7 +16,6 @@ const envSchema = z.object({
   AGENT_IDLE_MS: z.coerce.number().default(30 * 60 * 1000),
   AGENT_QUEUE_CAP: z.coerce.number().default(8),
   AGENT_INTERACTION_TIMEOUT_MS: z.coerce.number().default(5 * 60 * 1000),
-  // Env fallback for the embedded agent when ~/.yukino/config.yaml is absent.
   YUKINO_AI_PROTOCOL: z.enum(["", "anthropic", "openai", "openai-compat"]).default(""),
   YUKINO_AI_BASE_URL: z.string().default(""),
   YUKINO_AI_API_KEY: z.string().default(""),

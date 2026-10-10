@@ -24,8 +24,11 @@ interface ContactSettingsDialogProps {
   friend: Friend | null;
 }
 
-/** Per-contact remark plus tag assignment (`/contact/update-contact`). */
-export function ContactSettingsDialog({ open, onOpenChange, friend }: ContactSettingsDialogProps) {
+export function ContactSettingsDialog({
+  open,
+  onOpenChange,
+  friend,
+}: ContactSettingsDialogProps) {
   const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.userInfo.uuid);
 
@@ -35,7 +38,8 @@ export function ContactSettingsDialog({ open, onOpenChange, friend }: ContactSet
 
   const tags = useQuery({ ...tagsQuery(userId), enabled: open });
 
-  const refreshContacts = () => queryClient.invalidateQueries({ queryKey: keys.contacts.all });
+  const refreshContacts = () =>
+    queryClient.invalidateQueries({ queryKey: keys.contacts.all });
 
   const createTag = useMutation({
     mutationFn: (name: string) => contact.addTag(userId, name),
@@ -96,7 +100,9 @@ export function ContactSettingsDialog({ open, onOpenChange, friend }: ContactSet
                 onClick={() => setTagId("")}
                 className={cn(
                   "border-border cursor-pointer rounded-full border px-2.5 py-1 text-xs transition-colors",
-                  tagId === "" ? "bg-primary text-primary-foreground" : "hover:bg-accent",
+                  tagId === ""
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-accent",
                 )}
               >
                 None
@@ -108,7 +114,9 @@ export function ContactSettingsDialog({ open, onOpenChange, friend }: ContactSet
                   onClick={() => setTagId(tag.tag_id)}
                   className={cn(
                     "border-border cursor-pointer rounded-full border px-2.5 py-1 text-xs transition-colors",
-                    tagId === tag.tag_id ? "bg-primary text-primary-foreground" : "hover:bg-accent",
+                    tagId === tag.tag_id
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-accent",
                   )}
                 >
                   {tag.name}
@@ -139,7 +147,11 @@ export function ContactSettingsDialog({ open, onOpenChange, friend }: ContactSet
         </div>
 
         <DialogFooter>
-          <Button size="sm" disabled={!friend || save.isPending} onClick={() => save.mutate()}>
+          <Button
+            size="sm"
+            disabled={!friend || save.isPending}
+            onClick={() => save.mutate()}
+          >
             {save.isPending ? "Saving…" : "Save"}
           </Button>
           <Button size="sm" variant="ghost" onClick={() => onOpenChange(false)}>

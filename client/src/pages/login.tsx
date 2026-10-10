@@ -30,7 +30,9 @@ const BANNED = 1;
 export default function Login() {
   const navigate = useNavigate();
   const rememberedPhone = usePreferencesStore((state) => state.rememberedPhone);
-  const setRememberedPhone = usePreferencesStore((state) => state.setRememberedPhone);
+  const setRememberedPhone = usePreferencesStore(
+    (state) => state.setRememberedPhone,
+  );
   const [remember, setRemember] = useState(Boolean(rememberedPhone));
   const [resetOpen, setResetOpen] = useState(false);
 
@@ -42,7 +44,6 @@ export default function Login() {
         return;
       }
       setRememberedPhone(remember ? values.telephone : "");
-      // The socket connects from App once a uuid lands in the store.
       useAuthStore.getState().setAuth(result);
       navigate("/chat/sessions", { replace: true });
     },
@@ -60,7 +61,9 @@ export default function Login() {
     <AuthLayout>
       <Card className="shadow-primary/5 shadow-xl">
         <CardHeader>
-          <CardTitle className="text-2xl font-semibold tracking-tight">Sign In</CardTitle>
+          <CardTitle className="text-2xl font-semibold tracking-tight">
+            Sign In
+          </CardTitle>
           <CardDescription>Welcome back to Yukino Chat</CardDescription>
         </CardHeader>
         <form
@@ -72,7 +75,11 @@ export default function Login() {
           <CardContent className="flex flex-col gap-4">
             <form.Field name="telephone">
               {(field) => (
-                <FormField label="Phone" htmlFor="login-phone" errors={field.state.meta.errors}>
+                <FormField
+                  label="Phone"
+                  htmlFor="login-phone"
+                  errors={field.state.meta.errors}
+                >
                   <Input
                     id="login-phone"
                     inputMode="numeric"
@@ -119,7 +126,11 @@ export default function Login() {
           </CardContent>
 
           <CardFooter className="mt-4 flex-col gap-3">
-            <Button type="submit" className="w-full" disabled={signIn.isPending}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={signIn.isPending}
+            >
               {signIn.isPending ? "Signing in…" : "Sign In"}
             </Button>
             <div className="flex w-full justify-between">

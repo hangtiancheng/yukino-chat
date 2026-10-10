@@ -13,9 +13,10 @@ export const queryClient = new QueryClient({
     queries: {
       staleTime: 30_000,
       refetchOnWindowFocus: false,
-      // A rejection the backend reported will reject again; only retry transport failures.
       retry: (failureCount, error) =>
-        error instanceof ApiError && error.code !== NETWORK_ERROR_CODE ? false : failureCount < 2,
+        error instanceof ApiError && error.code !== NETWORK_ERROR_CODE
+          ? false
+          : failureCount < 2,
     },
   },
 });

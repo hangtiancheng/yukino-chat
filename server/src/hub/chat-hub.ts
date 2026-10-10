@@ -18,7 +18,6 @@ export interface ClientConn {
 }
 
 const HEARTBEAT_INTERVAL_MS = 30_000;
-// Three missed heartbeats mark the connection dead.
 const READ_IDLE_TIMEOUT_MS = 90_000;
 
 export class ChatHub {
@@ -68,7 +67,6 @@ export class ChatHub {
     }
     this.writeText(conn, WELCOME_TEXT);
     if (!old) {
-      // Presence changed: contacts refresh their online indicators.
       this.broadcastSystem(NotifyOnline, conn.uuid);
       this.db.userInfo
         .update({ where: { uuid: conn.uuid }, data: { lastOnlineAt: nowDate() } })
@@ -84,7 +82,6 @@ export class ChatHub {
     this.safeClose(conn);
     if (!removed) return;
 
-    // Drop out of any active call so peers close the dead streams.
     const [roomId, remaining] = this.calls.leave(conn.uuid);
     if (roomId !== "" && remaining.length > 0) {
       const item: MessageListItem = {
@@ -114,7 +111,6 @@ export class ChatHub {
       .catch(() => {});
   }
 
-  // Forces a client's socket closed and removes it (used by ws-logout).
   logout(uuid: string): boolean {
     const conn = this.clients.get(uuid);
     if (!conn) return false;
@@ -128,7 +124,6 @@ export class ChatHub {
     }
   }
 
-  // Delivers a payload to the given clients. Sends are best-effort.
   sendRaw(payload: string, targets: string[]) {
     for (const id of targets) {
       const conn = this.clients.get(id);
@@ -138,13 +133,11 @@ export class ChatHub {
     }
   }
 
-  // Writes a raw text frame to one client (e.g. the overflow rejection).
   sendTextTo(uuid: string, text: string) {
     const conn = this.clients.get(uuid);
     if (conn) this.writeText(conn, text);
   }
 
-  // System notification frame ({type:5, send_id:"SYSTEM", content:topic}).
   pushSystem(topic: string, uuids: string[]) {
     if (uuids.length === 0) return;
     const item: MessageListItem = {
@@ -164,7 +157,6 @@ export class ChatHub {
     this.sendRaw(JSON.stringify(item), uuids);
   }
 
-  // Sends a system notification to every online user except the excluded one.
   broadcastSystem(topic: string, exclude: string) {
     this.pushSystem(
       topic,
@@ -186,9 +178,7 @@ export class ChatHub {
     } catch {
       try {
         conn.ws.terminate();
-      } catch {
-        // Already gone.
-      }
+      } catch {}
     }
   }
 }

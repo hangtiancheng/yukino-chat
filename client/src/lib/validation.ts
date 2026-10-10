@@ -1,8 +1,12 @@
 import * as z from "zod";
 
-export const telephoneSchema = z.string().regex(/^1[3-9]\d{9}$/, "Enter a valid mobile number");
+export const telephoneSchema = z
+  .string()
+  .regex(/^1[3-9]\d{9}$/, "Enter a valid mobile number");
 
-export const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
+export const passwordSchema = z
+  .string()
+  .min(6, "Password must be at least 6 characters");
 
 export const nicknameSchema = z
   .string()
@@ -39,8 +43,8 @@ export const resetPasswordSchema = withMatchingConfirmation(
   }),
 );
 
-/** Every profile field is optional: a blank input leaves the value untouched. */
-const optionalText = <T extends z.ZodType>(schema: T) => z.union([schema, z.literal("")]);
+const optionalText = <T extends z.ZodType>(schema: T) =>
+  z.union([schema, z.literal("")]);
 
 export const profileSchema = z.object({
   nickname: optionalText(nicknameSchema),

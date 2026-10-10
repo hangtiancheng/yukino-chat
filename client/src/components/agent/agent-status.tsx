@@ -1,4 +1,8 @@
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import useAgentStore from "@/store/agent";
 import { formatTokens } from "@/utils/format";
@@ -17,16 +21,12 @@ const DOT_LABEL = {
   reconnecting: "Reconnecting to Yukino…",
 } as const;
 
-/** Header strip for the assistant thread: link health, model and token spend. */
 export function AgentStatus() {
   const status = useAgentStore((state) => state.status);
   const ready = useAgentStore((state) => state.ready);
   const model = useAgentStore((state) => state.model);
   const usage = useAgentStore((state) => state.usage);
 
-  // Warming up can take a while when MCP servers are configured, and a prompt
-  // sent meanwhile just waits its turn — so say so rather than showing a
-  // healthy dot the agent cannot live up to yet.
   const warming = status === "connected" && !ready;
   const dotClass = warming ? "bg-amber-500 animate-pulse" : DOT_CLASS[status];
   const label = warming ? "Yukino is starting up…" : DOT_LABEL[status];
@@ -41,7 +41,12 @@ export function AgentStatus() {
       {model && <span className="hidden font-mono sm:inline">{model}</span>}
       <Tooltip>
         <TooltipTrigger
-          render={<span aria-label={label} className={cn("size-2 rounded-full", dotClass)} />}
+          render={
+            <span
+              aria-label={label}
+              className={cn("size-2 rounded-full", dotClass)}
+            />
+          }
         />
         <TooltipContent side="bottom">{label}</TooltipContent>
       </Tooltip>

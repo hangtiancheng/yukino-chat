@@ -18,7 +18,6 @@ import useAuthStore from "./auth";
 
 export type ConnectionStatus = "disconnected" | "connecting" | "connected";
 
-/** `type: 3` frames carry WebRTC signalling; the call UI subscribes to them. */
 export type SignalListener = (frame: Message) => void;
 
 export interface WsState {
@@ -29,7 +28,6 @@ export interface WsState {
   subscribeToSignals: (listener: SignalListener) => () => void;
 }
 
-/** The server rejects a frame when its outbound queue is full. */
 const OVERFLOW_TYPE = -1;
 const INITIAL_RECONNECT_DELAY = 1000;
 const MAX_RECONNECT_DELAY = 30_000;
@@ -41,7 +39,6 @@ let intentionalClose = false;
 let reconnecting = false;
 const signalListeners = new Set<SignalListener>();
 
-/** A system frame names the list that went stale rather than carrying new data. */
 const staleKeysByTopic: Record<string, ReadonlyArray<readonly unknown[]>> = {
   [SystemTopic.Session]: [keys.sessions.all],
   [SystemTopic.Contact]: [keys.contacts.all],
@@ -60,7 +57,6 @@ function dispatchSignal(frame: Message) {
   }
 }
 
-/** Direct messages are keyed by the peer, group messages by the group. */
 function conversationIdOf(frame: Message, selfId: string): string {
   if (isGroupId(frame.receive_id)) return frame.receive_id;
   return frame.send_id === selfId ? frame.receive_id : frame.send_id;
@@ -71,8 +67,6 @@ function appendToConversation(frame: Message) {
   if (!selfId) return;
 
   const queryKey = keys.messages.with(selfId, conversationIdOf(frame, selfId));
-  // Writing to a conversation that was never opened would mark it fresh and
-  // suppress the real fetch, so only patch transcripts already in the cache.
   if (queryClient.getQueryState(queryKey)) {
     queryClient.setQueryData<Message[]>(queryKey, (current) =>
       uniqBy([...(current ?? []), frame], (message) => message.uuid),
@@ -82,7 +76,6 @@ function appendToConversation(frame: Message) {
 }
 
 function handleFrame(raw: unknown) {
-  // The server greets new clients with a plain-text line.
   if (typeof raw !== "string" || !raw.startsWith("{")) return;
 
   let payload: unknown;
@@ -100,8 +93,6 @@ function handleFrame(raw: unknown) {
     showToast(frame.content || "Message send failed, please retry", "warning");
     return;
   }
-  // `call_failed` arrives as SYSTEM with type 3, so signalling has to be
-  // dispatched before the system-topic branch would swallow it.
   if (frame.type === MessageType.AvSignal) {
     dispatchSignal(frame);
     return;
@@ -129,8 +120,6 @@ function openSocket(userId: string) {
     socket.close();
   }
 
-  // The server derives the identity from this token; a browser cannot set
-  // headers on a handshake, so it travels in the query string.
   const { token } = useAuthStore.getState();
   if (!token) {
     useWsStore.setState({ status: "disconnected" });
@@ -145,7 +134,6 @@ function openSocket(userId: string) {
   next.onopen = () => {
     reconnectDelay = INITIAL_RECONNECT_DELAY;
     useWsStore.setState({ status: "connected" });
-    // Anything could have changed while the socket was down.
     if (reconnecting) {
       reconnecting = false;
       void queryClient.invalidateQueries();

@@ -10,7 +10,9 @@ export default function ContactList() {
       </div>
       <div className="text-muted-foreground/50 flex flex-1 flex-col items-center justify-center">
         <User size={64} strokeWidth={1.5} className="mb-4" />
-        <p className="text-muted-foreground/70">Select a contact to start chatting</p>
+        <p className="text-muted-foreground/70">
+          Select a contact to start chatting
+        </p>
       </div>
     </>
   );

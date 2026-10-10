@@ -49,7 +49,6 @@ export class MessageService {
     return ["success", messages.map(toMessageListItem), 0];
   }
 
-  // Only group members may read the group's history.
   async getGroupMessageList(
     userId: string,
     groupId: string,

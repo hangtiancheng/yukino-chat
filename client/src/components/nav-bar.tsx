@@ -1,4 +1,12 @@
-import { LogOut, MessageSquare, Moon, Settings, Sun, User, Users } from "lucide-react";
+import {
+  LogOut,
+  MessageSquare,
+  Moon,
+  Settings,
+  Sun,
+  User,
+  Users,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { motion } from "motion/react";
 import { useTheme } from "next-themes";
@@ -6,7 +14,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import useAuthStore from "@/store/auth";
 import { performLogout } from "@/utils/logout";
@@ -23,7 +35,6 @@ const NAV_ITEMS: RailItem[] = [
   { label: "Profile", path: "/chat/profile", icon: User },
 ];
 
-/** An open conversation (`/chat/:id`) still belongs to the Sessions section. */
 function activeSection(pathname: string): string {
   if (pathname.startsWith("/chat/contacts")) return "/chat/contacts";
   if (pathname.startsWith("/chat/profile")) return "/chat/profile";
@@ -39,7 +50,13 @@ interface RailButtonProps {
   destructive?: boolean;
 }
 
-function RailButton({ label, icon: Icon, onClick, active, destructive }: RailButtonProps) {
+function RailButton({
+  label,
+  icon: Icon,
+  onClick,
+  active,
+  destructive,
+}: RailButtonProps) {
   return (
     <Tooltip>
       <TooltipTrigger
@@ -93,7 +110,9 @@ export function NavBar() {
     <nav className="border-border bg-muted/50 flex h-full w-16 shrink-0 flex-col items-center border-r py-4">
       <Avatar className="ring-primary/30 ring-offset-card size-10 ring-2 ring-offset-2 transition-transform duration-200 hover:scale-105">
         <AvatarImage src={userInfo.avatar} alt={userInfo.nickname} />
-        <AvatarFallback>{userInfo.nickname.charAt(0).toUpperCase() || "U"}</AvatarFallback>
+        <AvatarFallback>
+          {userInfo.nickname.charAt(0).toUpperCase() || "U"}
+        </AvatarFallback>
       </Avatar>
 
       <div className="mt-6 flex flex-col items-center gap-1">
@@ -125,7 +144,12 @@ export function NavBar() {
             onClick={() => navigate("/manager")}
           />
         )}
-        <RailButton label="Sign Out" icon={LogOut} onClick={signOut} destructive />
+        <RailButton
+          label="Sign Out"
+          icon={LogOut}
+          onClick={signOut}
+          destructive
+        />
       </div>
     </nav>
   );

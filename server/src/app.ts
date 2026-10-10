@@ -30,7 +30,6 @@ export function createApp(deps: Deps) {
     return c.json({ code: 500, message: "Internal Server Error" });
   });
 
-  // Only avatars and files are public — chunks must never be served.
   app.use(
     "/static/avatars/*",
     serveStatic({ root: "./static/avatars", rewriteRequestPath: stripPrefix("/static/avatars") }),

@@ -1,5 +1,3 @@
-// HTTP flow smoke test against a running server (default :8000).
-// Usage: node tests/http-smoke.mjs
 import assert from "node:assert";
 
 const BASE = process.env.SMOKE_BASE ?? "http://localhost:8000";
@@ -25,7 +23,6 @@ const rand = () => String(Date.now()).slice(-8);
 const A_PHONE = `138${rand()}`;
 const B_PHONE = `139${rand()}`;
 
-// --- register ---
 const a = await post("/register", { telephone: A_PHONE, password: "secret123", nickname: "Alice" });
 const b = await post("/register", { telephone: B_PHONE, password: "secret123", nickname: "Bob" });
 const tokenA = a.data.token;
@@ -36,7 +33,6 @@ assert.match(uuidA, /^U[0-9A-Za-z]{11}$/);
 assert.match(a.data.user_info.created_at, /^\d{4}\.\d{1,2}\.\d{1,2}$/);
 console.log("register ok", uuidA, uuidB);
 
-// --- login / errors ---
 const bad = await post("/login", { telephone: A_PHONE, password: "wrong" }, undefined, 400);
 assert.equal(bad.message, "incorrect password");
 await post("/user/get-user-info", {}, undefined, 401);
@@ -44,7 +40,6 @@ const info = await post("/user/get-user-info", {}, tokenA);
 assert.equal(info.data.uuid, uuidA);
 console.log("auth matrix ok");
 
-// --- search + apply + pass ---
 const found = await post("/user/search-user", { keyword: B_PHONE }, tokenA);
 assert.equal(found.data[0].uuid, uuidB);
 assert.equal(found.data[0].is_friend, false);
@@ -60,28 +55,24 @@ const foundAgain = await post("/user/search-user", { keyword: B_PHONE }, tokenA)
 assert.equal(foundAgain.data[0].is_friend, true);
 console.log("contact apply flow ok");
 
-// --- contact info masking ---
 const infoB = await post("/contact/get-contact-info", { contact_id: uuidB }, tokenA);
 assert.ok(infoB.data.contact_phone.includes("*"));
 const infoSelf = await post("/contact/get-contact-info", { contact_id: uuidA }, tokenA);
 assert.equal(infoSelf.data.contact_phone, A_PHONE);
 console.log("contact info masking ok");
 
-// --- sessions ---
 const s1 = await post("/session/open-session", { receive_id: uuidB }, tokenA);
 const s2 = await post("/session/open-session", { receive_id: uuidB }, tokenA);
 assert.equal(s1.data, s2.data, "open-session idempotent");
 const sessList = await post("/session/get-user-session-list", {}, tokenA);
 const bobSess = sessList.data.find((s) => s.user_id === uuidB);
 assert.ok(bobSess);
-// No DMs exchanged yet → empty preview, matching Go's zero-value meta.
 assert.equal(bobSess.last_message_at, "");
 const allowed = await post("/session/check-open-session-allowed", { receive_id: uuidB }, tokenA);
 assert.equal(allowed.data, true);
 await post("/session/mark-session-read", { receive_id: uuidB }, tokenA);
 console.log("session flow ok");
 
-// --- group ---
 const groupName = `Test Group ${rand()}`;
 const g = await post(
   "/group/create-group",
@@ -109,17 +100,13 @@ const addMode = await post("/group/check-group-add-mode", { group_id: groupId },
 assert.equal(addMode.data, 0);
 console.log("group flow ok");
 
-// --- messages (empty list → data: null) ---
 const empty = await post("/message/get-message-list", { receive_id: uuidB }, tokenA);
 assert.equal(empty.data, null);
-// group message list includes welcome; DM list for Yukino session includes nothing yet
 console.log("message list ok");
 
-// --- admin flow (bootstrap admin via DB would be needed; verify 403) ---
 await post("/user/get-user-info-list", { owner_id: uuidA }, tokenA, 403);
 console.log("admin guard ok");
 
-// --- rate limit (do last: pollutes the login bucket for this IP) ---
 let saw429 = false;
 for (let i = 0; i < 12; i++) {
   const r = await post("/login", { telephone: A_PHONE, password: "secret123" }, undefined, null);

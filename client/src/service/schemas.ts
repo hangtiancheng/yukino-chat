@@ -2,7 +2,6 @@ import * as z from "zod";
 
 import { resolveAvatar } from "@/utils/avatar";
 
-/** `Message.type` wire values (internal/constant/constant.go). */
 export const MessageType = {
   Text: 0,
   Image: 1,
@@ -12,7 +11,6 @@ export const MessageType = {
   System: 5,
 } as const;
 
-/** A system frame's `content` names the list that went stale. */
 export const SystemTopic = {
   Contact: "contact",
   Group: "group",
@@ -25,16 +23,12 @@ export type SystemTopicValue = (typeof SystemTopic)[keyof typeof SystemTopic];
 
 export const SYSTEM_SENDER = "SYSTEM";
 
-/** The backend prefixes user uuids with "U" and group uuids with "G". */
 export const isUserId = (id: string) => id.startsWith("U");
 export const isGroupId = (id: string) => id.startsWith("G");
 
-/** The built-in assistant is a reserved account, so it keeps the "U" prefix and
- * every id-prefix branch keeps working. Mirrors constant.YukinoUUID. */
 export const YUKINO_UUID = "UYUKINOAGENT";
 export const isYukino = (id: string) => id === YUKINO_UUID;
 
-/** Go marshals empty slices as `null`. */
 export const wireList = <T extends z.ZodType>(item: T) =>
   z
     .array(item)
@@ -172,8 +166,6 @@ export const groupSessionSchema = z.object({
 });
 export type GroupSession = z.infer<typeof groupSessionSchema>;
 
-/** `get-user-session-list` and `get-group-session-list` differ only in the
- * id/name field names; the sidebar renders both from one shape. */
 export interface ChatSession {
   kind: "user" | "group";
   id: string;
@@ -226,7 +218,6 @@ export const messageSchema = z
   }));
 export type Message = z.infer<typeof messageSchema>;
 
-/** The envelope the client writes to the socket (chat_server.go ChatMessageRequest). */
 export interface OutgoingFrame {
   session_id: string;
   type: number;

@@ -16,7 +16,11 @@ import { lazy, Suspense } from "react";
 
 import { AgentPermissionCard } from "@/components/agent/agent-permission-card";
 import { AgentQuestionCard } from "@/components/agent/agent-question-card";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import type {
   AgentItem,
@@ -27,7 +31,6 @@ import type {
   ToolArgs,
 } from "@/service/agent-schemas";
 
-// Same lazy boundary the bubbles use, so markdown keeps its own chunk.
 const MessageContent = lazy(() =>
   import("@/components/message-content").then((module) => ({
     default: module.MessageContent,
@@ -36,7 +39,6 @@ const MessageContent = lazy(() =>
 
 const OUTPUT_LIMIT = 5000;
 
-/** A few well-known argument keys make a far better header than raw JSON. */
 function argsPreview(args: ToolArgs): string {
   if (!args) return "";
   for (const key of ["command", "file_path", "pattern", "path", "url"]) {
@@ -51,7 +53,11 @@ function ToolIcon({ name, className }: { name: string; className?: string }) {
   if (name === "Grep" || name === "Glob" || name === "WebSearch") {
     return <Search className={className} />;
   }
-  if (name.startsWith("Read") || name.startsWith("Write") || name.startsWith("Edit")) {
+  if (
+    name.startsWith("Read") ||
+    name.startsWith("Write") ||
+    name.startsWith("Edit")
+  ) {
     return <FileText className={className} />;
   }
   return <Wrench className={className} />;
@@ -60,7 +66,9 @@ function ToolIcon({ name, className }: { name: string; className?: string }) {
 function StreamBlock({ item }: { item: AgentStreamItem }) {
   return (
     <div className="border-border bg-card text-foreground max-w-[70%] rounded-2xl rounded-bl-md border px-3.5 py-2.5 text-sm leading-relaxed wrap-break-word shadow-sm">
-      <Suspense fallback={<p className="whitespace-pre-wrap">{item.content}</p>}>
+      <Suspense
+        fallback={<p className="whitespace-pre-wrap">{item.content}</p>}
+      >
         <MessageContent content={item.content} />
       </Suspense>
       {item.streaming && (
@@ -105,12 +113,17 @@ function ToolBlock({ item }: { item: AgentToolItem }) {
     <Collapsible className="border-border bg-card/60 max-w-[85%] rounded-lg border">
       <CollapsibleTrigger className="group flex w-full cursor-pointer items-center gap-2 px-2.5 py-1.5 text-left">
         <ChevronRight className="text-muted-foreground size-3 shrink-0 transition-transform group-data-panel-open:rotate-90" />
-        <ToolIcon name={item.toolName} className="text-muted-foreground size-3.5 shrink-0" />
+        <ToolIcon
+          name={item.toolName}
+          className="text-muted-foreground size-3.5 shrink-0"
+        />
         <span className="text-foreground shrink-0 font-mono text-xs font-medium">
           {item.toolName}
         </span>
         {preview && (
-          <span className="text-muted-foreground truncate font-mono text-xs">{preview}</span>
+          <span className="text-muted-foreground truncate font-mono text-xs">
+            {preview}
+          </span>
         )}
         <span className="ml-auto shrink-0">
           {item.status === "running" && (
@@ -122,7 +135,9 @@ function ToolBlock({ item }: { item: AgentToolItem }) {
               {item.elapsed.toFixed(1)}s
             </span>
           )}
-          {item.status === "error" && <X className="text-destructive size-3.5" />}
+          {item.status === "error" && (
+            <X className="text-destructive size-3.5" />
+          )}
         </span>
       </CollapsibleTrigger>
       <CollapsibleContent>
@@ -136,7 +151,9 @@ function ToolBlock({ item }: { item: AgentToolItem }) {
             <pre
               className={cn(
                 "max-h-60 overflow-auto font-mono text-[11px] whitespace-pre-wrap",
-                item.status === "error" ? "text-destructive" : "text-foreground/80",
+                item.status === "error"
+                  ? "text-destructive"
+                  : "text-foreground/80",
               )}
             >
               {output}
@@ -149,7 +166,12 @@ function ToolBlock({ item }: { item: AgentToolItem }) {
 }
 
 function NoticeBlock({ item }: { item: AgentNoticeItem }) {
-  const Icon = item.tone === "error" ? AlertTriangle : item.tone === "done" ? CircleCheck : Info;
+  const Icon =
+    item.tone === "error"
+      ? AlertTriangle
+      : item.tone === "done"
+        ? CircleCheck
+        : Info;
   return (
     <div
       className={cn(
@@ -163,7 +185,6 @@ function NoticeBlock({ item }: { item: AgentNoticeItem }) {
   );
 }
 
-/** Renders one entry of the live overlay that sits between chat messages. */
 export function AgentItemView({ item }: { item: AgentItem }) {
   switch (item.kind) {
     case "stream":
@@ -181,7 +202,6 @@ export function AgentItemView({ item }: { item: AgentItem }) {
   }
 }
 
-/** The overlay is indented to line up with the assistant's bubbles. */
 export function AgentItemList({ items }: { items: AgentItem[] }) {
   if (items.length === 0) return null;
   return (

@@ -1,7 +1,6 @@
 import { motion } from "motion/react";
 import type { ReactNode } from "react";
 
-/** Shared chrome for the sign-in and register screens. */
 export function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="bg-background relative flex min-h-screen items-center justify-center overflow-hidden p-4">

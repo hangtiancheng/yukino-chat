@@ -10,7 +10,6 @@ import { MessageService } from "./services/message-service.js";
 import { SessionService } from "./services/session-service.js";
 import { UserService } from "./services/user-service.js";
 
-// Dependency bag threaded through routes; wired once in createDeps().
 export interface Deps {
   db: PrismaDB;
   cache: CacheService;

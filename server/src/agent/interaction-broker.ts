@@ -21,9 +21,6 @@ interface PendingQuestion {
   timer: NodeJS.Timeout;
 }
 
-// Pairs permission/question prompts with in-memory promises. Every prompt
-// fails closed after a timeout (permissions → deny, questions → reject) and
-// on cancellation, mirroring the Go bridge and the demo interaction broker.
 export class InteractionBroker {
   private permissions = new Map<string, PendingPermission>();
   private questions = new Map<string, PendingQuestion>();
@@ -48,8 +45,6 @@ export class InteractionBroker {
     });
   }
 
-  // Returns false for unknown/expired ids so the WS route can answer
-  // {applied: false}, like the Go bridge.
   resolvePermission(id: string, decision: PermissionDecision): boolean {
     const pending = this.permissions.get(id);
     if (!pending) return false;
@@ -68,7 +63,6 @@ export class InteractionBroker {
     return true;
   }
 
-  // Pending prompts a reconnecting client must still see.
   snapshot(): { permissions: PermissionRequestParams[]; questions: QuestionRequestParams[] } {
     return {
       permissions: [...this.permissions.values()].map((p) => p.params),
@@ -80,8 +74,6 @@ export class InteractionBroker {
     return this.permissions.size > 0 || this.questions.size > 0;
   }
 
-  // Fail-closed: denies every pending permission and rejects every pending
-  // question. Used by cancel and dispose.
   cancelAll(reason = "cancelled") {
     for (const [id, p] of this.permissions) {
       clearTimeout(p.timer);

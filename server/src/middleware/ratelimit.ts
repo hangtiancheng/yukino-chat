@@ -13,8 +13,6 @@ function clientIP(c: Context): string {
   return addr ?? "unknown";
 }
 
-// Per-IP sliding window, per middleware instance (Go parity: /login and
-// /register each get their own bucket).
 export const rateLimit = (max: number, windowMs: number): MiddlewareHandler => {
   const hits = new Map<string, number[]>();
 

@@ -1,11 +1,6 @@
 import { Config } from "@yukino.js/yukino";
 import { env } from "../config/env.js";
 
-// Resolves the embedded agent's provider stack. Primary source is yukino's own
-// config (~/.yukino/config.yaml then ./.yukino/config.yaml, same as the Go
-// bridge); when no config file exists a single provider can be synthesized
-// from YUKINO_AI_* env vars. null means "agent unavailable" — chat keeps
-// working and the assistant thread reports itself unavailable.
 export interface AgentConfig {
   provider: Config.ProviderConfig;
   mcpServers: Config.MCPServerConfig[];
@@ -39,9 +34,7 @@ function resolve(): AgentConfig | null {
         permissionMode: config.permission_mode ?? "default",
       };
     }
-  } catch {
-    // Fall through to env.
-  }
+  } catch {}
   if (env.YUKINO_AI_BASE_URL === "" || env.YUKINO_AI_MODEL === "") {
     return null;
   }

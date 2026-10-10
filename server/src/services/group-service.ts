@@ -113,7 +113,6 @@ export class GroupService {
       return ["invalid add_mode", null, -2];
     }
 
-    // Only existing, active users besides the owner become initial members.
     const members = [ownerId];
     if (memberIds.length > 0) {
       const users = await this.db.userInfo.findMany({
@@ -163,7 +162,6 @@ export class GroupService {
       return ["Internal Server Error", null, -1];
     }
 
-    // A welcome message keeps the fresh group visible in session previews.
     let sendName = "";
     let sendAvatar = "";
     const owner = await this.db.userInfo.findFirst({
@@ -251,7 +249,6 @@ export class GroupService {
     return ["joined group", 0];
   }
 
-  // Adds the given users to the group, skipping the ones already in it.
   async inviteGroupMembers(groupId: string, memberIds: string[]): Promise<[string, number]> {
     const group = await this.db.groupInfo.findFirst({
       where: { uuid: groupId, deletedAt: null },
@@ -278,7 +275,6 @@ export class GroupService {
       await addGroupMember(this.db, groupId, id);
       await ensureGroupContact(this.db, id, groupId);
     }
-    // Refresh the members array before creating sessions for everyone.
     const updated = await this.db.groupInfo.findFirst({
       where: { uuid: groupId, deletedAt: null },
     });
@@ -290,7 +286,6 @@ export class GroupService {
     return ["members invited", 0];
   }
 
-  // Finds groups by name keyword, flagging the ones the caller has joined.
   async searchGroups(
     ownerId: string,
     keyword: string,
@@ -382,7 +377,6 @@ export class GroupService {
     const data = { ...fields };
     await this.db.groupInfo.update({ where: { uuid }, data });
 
-    // Keep the denormalized session fields in sync with the group profile.
     const sessionFields: { receiveName?: string; avatar?: string } = {};
     if (fields.name !== undefined) sessionFields.receiveName = fields.name;
     if (fields.avatar !== undefined) sessionFields.avatar = fields.avatar;
@@ -405,8 +399,6 @@ export class GroupService {
       where: { uuid: { in: group.members }, deletedAt: null },
     });
 
-    // Join time comes from the member's group contact record; the owner's is
-    // the group creation time.
     const joinedAt = new Map<string, Date>();
     const contacts = await this.db.userContact.findMany({
       where: { contactId: groupId, userId: { in: group.members }, deletedAt: null },
@@ -416,7 +408,6 @@ export class GroupService {
     }
     joinedAt.set(group.ownerId, group.createdAt);
 
-    // Last-speak time per member over the group's visible messages.
     const lastSpoke = new Map<string, Date>();
     const rows = await this.db.message.groupBy({
       by: ["sendId"],

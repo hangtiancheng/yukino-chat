@@ -6,7 +6,6 @@ import { Streamdown } from "streamdown";
 
 import { cn } from "@/lib/utils";
 
-/** Configured once at module scope: chat text is static markdown, never streamed. */
 const plugins = { cjk, code, math, mermaid };
 
 interface MessageContentProps {

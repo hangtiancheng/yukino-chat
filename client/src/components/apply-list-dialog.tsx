@@ -14,10 +14,12 @@ import { keys } from "@/service/queries";
 import type { Apply } from "@/service/schemas";
 import { showToast } from "@/utils/toast";
 
-/** Friend requests and group join requests share these three endpoints. */
 type Verdict = "pass" | "refuse" | "block";
 
-const RESOLVE: Record<Verdict, { run: (id: string) => Promise<void>; done: string }> = {
+const RESOLVE: Record<
+  Verdict,
+  { run: (id: string) => Promise<void>; done: string }
+> = {
   pass: { run: contact.passApply, done: "Approved" },
   refuse: { run: contact.refuseApply, done: "Refused" },
   block: { run: contact.blackApply, done: "Blocked" },

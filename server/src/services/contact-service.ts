@@ -113,8 +113,6 @@ export class ContactService {
     return ["contact updated", 0];
   }
 
-  // Blocked contacts are included (with their status) so the client can offer
-  // an unblock action.
   async getUserList(ownerId: string): Promise<[string, ContactListItem[] | null, number]> {
     const contacts = await this.db.userContact.findMany({
       where: {
@@ -173,7 +171,6 @@ export class ContactService {
     return ["success", list, 0];
   }
 
-  // Phone and email are PII: only the account owner sees them in full.
   async getContactInfo(
     userId: string,
     contactId: string,
@@ -243,7 +240,6 @@ export class ContactService {
     if (isYukino(contactId)) {
       return ["the Yukino assistant cannot be applied", -2];
     }
-    // Validate the target and refuse disabled targets.
     if (contactType === ContactTypeUser) {
       const target = await this.db.userInfo.findFirst({
         where: { uuid: contactId, deletedAt: null },
@@ -258,8 +254,6 @@ export class ContactService {
       if (target.status === GroupStatusDisable) return ["group is disabled", -2];
     }
 
-    // Re-applying updates the existing record instead of inserting a new one;
-    // a blacklisted apply blocks any further attempts.
     const existing = await this.db.contactApply.findFirst({
       where: { userId, contactId, deletedAt: null },
     });
@@ -294,8 +288,6 @@ export class ContactService {
     return ["application submitted", 0];
   }
 
-  // Pushes an apply notification to whoever reviews it: the target user for
-  // friend applies, the group owner for join applies.
   private async notifyApplyRecipient(contactId: string, contactType: number) {
     if (contactType === ContactTypeUser) {
       this.hub.pushSystem(NotifyApply, [contactId]);
@@ -307,7 +299,6 @@ export class ContactService {
     if (group) this.hub.pushSystem(NotifyApply, [group.ownerId]);
   }
 
-  // Pending friend applications addressed to the user.
   async getNewContactList(
     userId: string,
   ): Promise<[string, ContactApplyResponse[] | null, number]> {
@@ -352,8 +343,6 @@ export class ContactService {
     return apply.contactId === userId;
   }
 
-  // Approves an application. Friend applications create the two-way contact
-  // pair; group applications add the applicant to the group.
   async passContactApply(userId: string, applyId: string): Promise<[string, number]> {
     const apply = await this.db.contactApply.findFirst({
       where: { uuid: applyId, deletedAt: null },
@@ -405,7 +394,6 @@ export class ContactService {
       where: { userId: contactId, contactId: userId },
       data: { status: ContactBeBlack, updatedAt: now },
     });
-    // The blocker's session goes away, matching the old behavior.
     await this.db.session.updateMany({
       where: { sendId: userId, receiveId: contactId, deletedAt: null },
       data: { deletedAt: now },
@@ -443,8 +431,6 @@ export class ContactService {
         where: { userId: contactId, contactId: userId, deletedAt: null },
         data: { status: ContactBeDelete, deletedAt: now },
       });
-      // Both directions of the session and the historical applies go away, so
-      // a future application starts from a clean slate.
       await tx.session.updateMany({
         where: { sendId: userId, receiveId: contactId, deletedAt: null },
         data: { deletedAt: now },
@@ -499,7 +485,6 @@ export class ContactService {
     return ["application blocked", 0];
   }
 
-  // Pending join applications for every group the caller owns.
   async getAddGroupList(ownerId: string): Promise<[string, ContactApplyResponse[] | null, number]> {
     const groups = await this.db.groupInfo.findMany({
       where: { ownerId, deletedAt: null },
@@ -518,8 +503,6 @@ export class ContactService {
     return ["success", await this.toApplyResponses(applies), 0];
   }
 
-  // Soft-deletes the member's session, contact record (stamped with the given
-  // status) and pending applies for the group. Shared with group-service.
   async cleanupGroupMembership(userId: string, groupId: string, contactStatus: number) {
     const now = new Date();
     await this.db.userContact.updateMany({
@@ -538,24 +521,19 @@ export class ContactService {
   }
 }
 
-// Keeps the first 3 and last 4 digits, e.g. 138****1234.
 function maskPhone(phone: string): string {
   if (phone.length < 7) return "*".repeat(phone.length);
   return phone.slice(0, 3) + "*".repeat(phone.length - 7) + phone.slice(-4);
 }
 
-// Keeps the first character of the local part and the domain.
 function maskEmail(email: string): string {
   const at = email.lastIndexOf("@");
   if (at <= 1) return email;
   return email.slice(0, 1) + "*".repeat(at - 1) + email.slice(at);
 }
 
-// Prisma transaction clients share the model API surface of PrismaDB for the
-// models used here.
 type Tx = Parameters<Parameters<PrismaDB["$transaction"]>[0]>[0];
 
-// Inserts a user↔user contact, restoring a soft-deleted record if one exists.
 export async function ensureUserContact(db: PrismaDB | Tx, userId: string, contactId: string) {
   const now = new Date();
   const existing = await db.userContact.findFirst({ where: { userId, contactId } });
@@ -578,7 +556,6 @@ export async function ensureUserContact(db: PrismaDB | Tx, userId: string, conta
   });
 }
 
-// Inserts the user→group contact, restoring a previously soft-deleted record.
 export async function ensureGroupContact(db: PrismaDB | Tx, userId: string, groupId: string) {
   const now = new Date();
   const existing = await db.userContact.findFirst({ where: { userId, contactId: groupId } });
@@ -601,8 +578,6 @@ export async function ensureGroupContact(db: PrismaDB | Tx, userId: string, grou
   });
 }
 
-// Appends the user to the members array and bumps member_cnt when the set
-// actually grew.
 export async function addGroupMember(
   db: PrismaDB | Tx,
   groupId: string,
@@ -625,8 +600,6 @@ export async function addGroupMember(
   return true;
 }
 
-// Removes the user from the members array and drops member_cnt when the
-// member was actually present.
 export async function removeGroupMember(
   db: PrismaDB | Tx,
   groupId: string,

@@ -41,14 +41,12 @@ export const overflowFrame =
 
 export const WELCOME_TEXT = "welcome to yukino chat";
 
-// System notification topics carried in the content field of type-5 frames.
 export const NotifyContact = "contact";
 export const NotifyGroup = "group";
 export const NotifyApply = "apply";
 export const NotifySession = "session";
 export const NotifyOnline = "online";
 
-// Message types.
 export const MessageText = 0;
 export const MessageImage = 1;
 export const MessageFile = 2;
@@ -56,11 +54,9 @@ export const MessageAudioOrVideo = 3;
 export const MessageVideo = 4;
 export const MessageSystem = 5;
 
-// Message delivery status.
 export const MessageUnsent = 0;
 export const MessageSent = 1;
 
-// User/group/apply status enums (wire ints).
 export const UserStatusNormal = 0;
 export const UserStatusDisable = 1;
 

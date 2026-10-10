@@ -20,8 +20,6 @@ export function registerWsChatRoute(
     if (!claims) {
       return c.json({ code: 401, message: "invalid or expired token" });
     }
-    // Trusting a client-supplied id would let anyone who knows a uuid evict
-    // that user's socket and receive their messages.
     const clientId = c.req.query("client_id") ?? "";
     if (clientId !== "" && clientId !== claims.uuid) {
       return c.json({ code: 403, message: "client_id does not match the token" });

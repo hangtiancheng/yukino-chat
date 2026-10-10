@@ -3,7 +3,12 @@ import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 import { cn } from "@/lib/utils";
 
 function Tabs({ className, ...props }: TabsPrimitive.Root.Props) {
-  return <TabsPrimitive.Root className={cn("flex flex-col gap-3", className)} {...props} />;
+  return (
+    <TabsPrimitive.Root
+      className={cn("flex flex-col gap-3", className)}
+      {...props}
+    />
+  );
 }
 
 function TabsList({ className, ...props }: TabsPrimitive.List.Props) {
@@ -31,7 +36,9 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
 }
 
 function TabsContent({ className, ...props }: TabsPrimitive.Panel.Props) {
-  return <TabsPrimitive.Panel className={cn("outline-none", className)} {...props} />;
+  return (
+    <TabsPrimitive.Panel className={cn("outline-none", className)} {...props} />
+  );
 }
 
 export { Tabs, TabsContent, TabsList, TabsTrigger };

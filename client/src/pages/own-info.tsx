@@ -64,7 +64,6 @@ export default function OwnInfo() {
     },
     onSuccess: async () => {
       showToast("Profile updated", "success");
-      // Re-read from the server so the nav rail avatar matches what was stored.
       await queryClient.invalidateQueries({
         queryKey: keys.users.profile(userId),
       });
@@ -84,7 +83,11 @@ export default function OwnInfo() {
     validators: { onSubmit: profileSchema },
     onSubmit: ({ value }) => {
       const untouched =
-        !value.nickname && !value.email && !value.birthday && !value.signature && !avatarFile;
+        !value.nickname &&
+        !value.email &&
+        !value.birthday &&
+        !value.signature &&
+        !avatarFile;
       if (untouched) {
         showToast("Please modify at least one field", "warning");
         return;
@@ -125,7 +128,10 @@ export default function OwnInfo() {
           <InfoLine label="User ID" value={me.uuid} />
           <InfoLine label="Phone" value={me.telephone} />
           <InfoLine label="Email" value={me.email} />
-          <InfoLine label="Gender" value={me.gender === 0 ? "Male" : "Female"} />
+          <InfoLine
+            label="Gender"
+            value={me.gender === 0 ? "Male" : "Female"}
+          />
           <InfoLine label="Birthday" value={me.birthday} />
           <InfoLine label="Joined" value={me.created_at} />
           <div>
@@ -144,7 +150,11 @@ export default function OwnInfo() {
         </div>
 
         <div className="absolute right-6 bottom-6 flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => setPasswordOpen(true)}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setPasswordOpen(true)}
+          >
             Change Password
           </Button>
           <Button size="sm" onClick={() => setEditOpen(true)}>
@@ -182,7 +192,9 @@ export default function OwnInfo() {
                       placeholder={me.nickname || "3-10 characters"}
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
+                      onChange={(event) =>
+                        field.handleChange(event.target.value)
+                      }
                     />
                   </FormField>
                 )}
@@ -190,13 +202,19 @@ export default function OwnInfo() {
 
               <form.Field name="email">
                 {(field) => (
-                  <FormField label="Email" htmlFor="edit-email" errors={field.state.meta.errors}>
+                  <FormField
+                    label="Email"
+                    htmlFor="edit-email"
+                    errors={field.state.meta.errors}
+                  >
                     <Input
                       id="edit-email"
                       placeholder={me.email || "Optional"}
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
+                      onChange={(event) =>
+                        field.handleChange(event.target.value)
+                      }
                     />
                   </FormField>
                 )}
@@ -214,7 +232,9 @@ export default function OwnInfo() {
                       type="date"
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
+                      onChange={(event) =>
+                        field.handleChange(event.target.value)
+                      }
                     />
                   </FormField>
                 )}
@@ -232,7 +252,9 @@ export default function OwnInfo() {
                       placeholder={me.signature || "Optional"}
                       value={field.state.value}
                       onBlur={field.handleBlur}
-                      onChange={(event) => field.handleChange(event.target.value)}
+                      onChange={(event) =>
+                        field.handleChange(event.target.value)
+                      }
                     />
                   </FormField>
                 )}
@@ -250,14 +272,19 @@ export default function OwnInfo() {
                   <input {...getInputProps()} />
                   {avatarFile ? (
                     <Avatar className="size-9">
-                      <AvatarImage src={URL.createObjectURL(avatarFile)} alt={avatarFile.name} />
+                      <AvatarImage
+                        src={URL.createObjectURL(avatarFile)}
+                        alt={avatarFile.name}
+                      />
                       <AvatarFallback>?</AvatarFallback>
                     </Avatar>
                   ) : (
                     <ImageUp className="text-muted-foreground size-5" />
                   )}
                   <span className="text-muted-foreground truncate text-xs">
-                    {avatarFile ? avatarFile.name : "Drop an image here, or click to choose one"}
+                    {avatarFile
+                      ? avatarFile.name
+                      : "Drop an image here, or click to choose one"}
                   </span>
                 </div>
               </div>
@@ -266,7 +293,12 @@ export default function OwnInfo() {
                 <Button type="submit" size="sm" disabled={save.isPending}>
                   {save.isPending ? "Saving…" : "Save"}
                 </Button>
-                <Button type="button" variant="ghost" size="sm" onClick={closeEdit}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={closeEdit}
+                >
                   Cancel
                 </Button>
               </DialogFooter>
@@ -274,7 +306,10 @@ export default function OwnInfo() {
           </DialogContent>
         </Dialog>
 
-        <ResetPasswordDialog open={passwordOpen} onOpenChange={setPasswordOpen} />
+        <ResetPasswordDialog
+          open={passwordOpen}
+          onOpenChange={setPasswordOpen}
+        />
       </div>
     </>
   );

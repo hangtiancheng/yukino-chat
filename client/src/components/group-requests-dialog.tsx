@@ -12,7 +12,10 @@ interface GroupRequestsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function GroupRequestsDialog({ open, onOpenChange }: GroupRequestsDialogProps) {
+export function GroupRequestsDialog({
+  open,
+  onOpenChange,
+}: GroupRequestsDialogProps) {
   const userId = useAuthStore((state) => state.userInfo.uuid);
   const applies = useQuery({ ...groupAppliesQuery(userId), enabled: open });
 

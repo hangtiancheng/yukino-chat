@@ -1,7 +1,3 @@
-// WebSocket smoke test against a running server (default :8000).
-// Covers: chat WS handshake/presence/DM/group fan-out/eviction, call_failed,
-// agent WS JSON-RPC handshake + ping + DM dispatch, dashboard WS.
-// Usage: node tests/ws-smoke.mjs
 import assert from "node:assert";
 import WebSocket from "ws";
 
@@ -91,7 +87,6 @@ class Sock {
 
 const parse = (item) => JSON.parse(item.text);
 
-// --- users ---
 const a = await post("/register", { telephone: A_PHONE, password: "secret123", nickname: "Alice" });
 const b = await post("/register", { telephone: B_PHONE, password: "secret123", nickname: "Bob" });
 const tokenA = a.data.token;
@@ -107,7 +102,6 @@ const groupId = (
 ).data.uuid;
 console.log("users + group ready");
 
-// --- chat WS handshake ---
 const sockA = new Sock(`${WS_URL}/wss?token=${tokenA}&client_id=${uuidA}`);
 await sockA.opened;
 const welcomeA = await sockA.next();
@@ -115,9 +109,8 @@ assert.equal(welcomeA.text, "welcome to yukino chat");
 
 const sockB = new Sock(`${WS_URL}/wss?token=${tokenB}`);
 await sockB.opened;
-await sockB.next(); // welcome
+await sockB.next();
 
-// A should learn about B's online presence (system frame).
 await sockA.next(5000, (q) => {
   try {
     const f = parse(q);
@@ -128,22 +121,19 @@ await sockA.next(5000, (q) => {
 });
 console.log("handshake + presence ok");
 
-// --- DM fan-out (echo to sender) ---
 sockA.send({ session_id: "", type: 0, content: "hello bob", receive_id: uuidB });
 const dmAtB = await sockB.next(5000, (q) => q.text.includes("hello bob"));
 const dmFrame = parse(dmAtB);
 assert.equal(dmFrame.send_id, uuidA);
 assert.equal(dmFrame.send_name, "Alice");
 assert.match(dmFrame.uuid, /^M[0-9A-Za-z]{11}$/);
-await sockA.next(5000, (q) => q.text.includes("hello bob")); // echo
+await sockA.next(5000, (q) => q.text.includes("hello bob"));
 
-// --- group fan-out ---
 sockA.send({ session_id: "", type: 0, content: "hello group", receive_id: groupId });
 await sockB.next(5000, (q) => q.text.includes("hello group"));
 await sockA.next(5000, (q) => q.text.includes("hello group"));
 console.log("dm + group fan-out ok");
 
-// --- unread + preview via HTTP (after the DM) ---
 const sessList = await post("/session/get-user-session-list", {}, tokenB);
 const aliceSess = sessList.data.find((s) => s.user_id === uuidA);
 assert.equal(aliceSess.last_message, "hello bob");
@@ -153,7 +143,6 @@ const afterRead = await post("/session/get-user-session-list", {}, tokenB);
 assert.equal(afterRead.data.find((s) => s.user_id === uuidA).unread_cnt, 0);
 console.log("unread + read cursor ok");
 
-// --- call signaling: start_call to offline Yukino → call_failed ---
 sockA.send({
   session_id: "",
   type: 3,
@@ -167,7 +156,6 @@ assert.equal(failedFrame.send_id, "SYSTEM");
 assert.equal(JSON.parse(failedFrame.av_data).reason, "Yukino is a text-only assistant and cannot take calls");
 console.log("call_failed ok");
 
-// --- eviction: second socket for A closes the first ---
 const sockA2 = new Sock(`${WS_URL}/wss?token=${tokenA}&client_id=${uuidA}`);
 await sockA2.opened;
 const evicted = await Promise.race([
@@ -175,16 +163,12 @@ const evicted = await Promise.race([
   new Promise((_, reject) => setTimeout(() => reject(new Error("first socket not evicted")), 5000)),
 ]);
 assert.equal(typeof evicted, "number");
-// A reconnect (eviction) produces no presence traffic — the user never went
-// offline — but the replacement socket must be fully functional.
 sockA2.send({ session_id: "", type: 0, content: "after eviction", receive_id: uuidB });
 await sockB.next(5000, (q) => q.text.includes("after eviction"));
 console.log("eviction + re-presence ok");
 
-// --- agent WS handshake (JSON-RPC) ---
 const agentSock = new Sock(`${WS_URL}/agent/ws?token=${tokenA}`);
 await agentSock.opened;
-// First attach creates the runtime (config load, MCP spawns) — allow a slow boot.
 const connected = parse(await agentSock.next(60000));
 assert.equal(connected.method, "session/connected");
 assert.equal(typeof connected.params.model, "string");
@@ -201,18 +185,14 @@ const errResp = parse(await agentSock.next(5000, (q) => q.text.includes('"id":2'
 assert.equal(errResp.error.code, -32601);
 console.log("agent ws handshake ok (model:", connected.params.model, "mode:", connected.params.permissionMode, ")");
 
-// --- agent DM round-trip: prompt reaches the runtime (run_start) ---
 agentSock.send({ jsonrpc: "2.0", id: 10, method: "ping" });
 await agentSock.next(5000, (q) => q.text.includes('"id":10'));
 console.log("sockA2 readyState before DM:", sockA2.ws.readyState);
 sockA2.send({ session_id: "", type: 0, content: "smoke test prompt", receive_id: "UYUKINOAGENT" });
-// The runtime must at least announce run_start with the persisted chat uuid.
 const runStart = await agentSock.next(15000, (q) => q.text.includes("agent/run_start"));
 const runStartFrame = parse(runStart);
 assert.match(runStartFrame.params.userMessageId, /^M[0-9A-Za-z]{11}$/);
 console.log("agent dispatch ok (userMessageId:", runStartFrame.params.userMessageId, ")");
-// Assistant reply arrives as a chat message on the chat socket (or the turn
-// errors out on the LLM — either way the reply path must produce a frame).
 try {
   await sockA2.next(30000, (q) => {
     const f = parse(q);
@@ -223,7 +203,6 @@ try {
   console.log("assistant chat reply skipped (LLM turn failed — acceptable for smoke)");
 }
 
-// --- dashboard: non-admin rejected before upgrade, admin gets snapshots ---
 const nonAdmin = await fetch(`${BASE}/dashboard/ws?token=${tokenA}`);
 assert.equal(nonAdmin.status, 200);
 assert.equal((await nonAdmin.json()).code, 403);

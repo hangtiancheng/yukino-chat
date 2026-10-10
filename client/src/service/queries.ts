@@ -10,22 +10,24 @@ import {
   type GroupSession,
 } from "./schemas";
 
-/** Query keys are grouped by domain so a websocket notification can invalidate
- * a whole branch (`keys.contacts.all`) without knowing every leaf. */
 export const keys = {
   sessions: {
     all: ["sessions"] as const,
     user: (userId: string) => ["sessions", "user", userId] as const,
     group: (userId: string) => ["sessions", "group", userId] as const,
-    open: (userId: string, contactId: string) => ["sessions", "open", userId, contactId] as const,
+    open: (userId: string, contactId: string) =>
+      ["sessions", "open", userId, contactId] as const,
   },
   contacts: {
     all: ["contacts"] as const,
     friends: (userId: string) => ["contacts", "friends", userId] as const,
     tags: (userId: string) => ["contacts", "tags", userId] as const,
-    info: (userId: string, contactId: string) => ["contacts", "info", userId, contactId] as const,
-    contactApplies: (userId: string) => ["contacts", "applies", "contact", userId] as const,
-    groupApplies: (userId: string) => ["contacts", "applies", "group", userId] as const,
+    info: (userId: string, contactId: string) =>
+      ["contacts", "info", userId, contactId] as const,
+    contactApplies: (userId: string) =>
+      ["contacts", "applies", "contact", userId] as const,
+    groupApplies: (userId: string) =>
+      ["contacts", "applies", "group", userId] as const,
     userSearch: (userId: string, keyword: string) =>
       ["contacts", "search", "user", userId, keyword] as const,
     groupSearch: (userId: string, keyword: string) =>
@@ -41,7 +43,8 @@ export const keys = {
   },
   messages: {
     all: ["messages"] as const,
-    with: (userId: string, contactId: string) => ["messages", userId, contactId] as const,
+    with: (userId: string, contactId: string) =>
+      ["messages", userId, contactId] as const,
   },
   users: {
     all: ["users"] as const,
@@ -51,11 +54,11 @@ export const keys = {
   chatroom: {
     all: ["chatroom"] as const,
     online: ["chatroom", "online"] as const,
-    callers: (roomId: string, userId: string) => ["chatroom", "callers", roomId, userId] as const,
+    callers: (roomId: string, userId: string) =>
+      ["chatroom", "callers", roomId, userId] as const,
   },
 };
 
-/** Module scope keeps the reference stable so react-query can memoize it. */
 const newestFirst = (rows: Array<UserSession | GroupSession>): ChatSession[] =>
   orderBy(rows.map(toChatSession), ["lastMessageAtMs"], ["desc"]);
 
@@ -75,7 +78,6 @@ export const groupSessionsQuery = (userId: string) =>
     enabled: Boolean(userId),
   });
 
-/** Opening a session is idempotent, so it reads as a query even though it POSTs. */
 export const openSessionQuery = (userId: string, contactId: string) =>
   queryOptions({
     queryKey: keys.sessions.open(userId, contactId),

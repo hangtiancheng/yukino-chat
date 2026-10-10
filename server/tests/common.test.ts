@@ -64,7 +64,6 @@ describe("sanitizeFilename", () => {
   });
 
   it("replaces unsafe characters", () => {
-    // basename("a b/c$d.txt") strips the directory first, like Go.
     expect(sanitizeFilename("a b/c$d.txt")).toBe("c_d.txt");
   });
 

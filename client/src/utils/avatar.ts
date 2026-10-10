@@ -49,7 +49,12 @@ export const genIdenticon = memoize((seed: string): string => {
         ctx.fillRect(MARGIN + col * CELL, MARGIN + row * CELL, CELL, CELL);
         const mirrorCol = GRID - 1 - col;
         if (mirrorCol !== col) {
-          ctx.fillRect(MARGIN + mirrorCol * CELL, MARGIN + row * CELL, CELL, CELL);
+          ctx.fillRect(
+            MARGIN + mirrorCol * CELL,
+            MARGIN + row * CELL,
+            CELL,
+            CELL,
+          );
         }
       }
     }

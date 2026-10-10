@@ -8,9 +8,12 @@ import { Button } from "@/components/ui/button";
 import { staticUrl } from "@/env";
 import { cn } from "@/lib/utils";
 import { MessageType, type Message } from "@/service/schemas";
-import { formatMessageDay, formatMessageTime, messageDayKey } from "@/utils/format";
+import {
+  formatMessageDay,
+  formatMessageTime,
+  messageDayKey,
+} from "@/utils/format";
 
-// Markdown brings shiki, katex and mermaid with it, so it ships as its own chunk.
 const MessageContent = lazy(() =>
   import("@/components/message-content").then((module) => ({
     default: module.MessageContent,
@@ -22,8 +25,6 @@ interface MessageBubbleProps {
   currentUserId: string;
   currentUserAvatar: string;
   currentUserName: string;
-  /** Renders extra content directly after a given message. The assistant thread
-   * uses it to slot live tool calls and thinking into the spot they happened. */
   renderAfter?: (messageUuid: string) => ReactNode;
 }
 
@@ -40,16 +41,20 @@ async function downloadFile(url: string, name: string) {
     link.click();
     link.remove();
     URL.revokeObjectURL(objectUrl);
-  } catch {
-    // A failed download needs no recovery beyond leaving the bubble untouched.
-  }
+  } catch {}
 }
 
 function initialOf(name: string): string {
   return name.trim().charAt(0).toUpperCase() || "?";
 }
 
-function FileAttachment({ message, isSelf }: { message: Message; isSelf: boolean }) {
+function FileAttachment({
+  message,
+  isSelf,
+}: {
+  message: Message;
+  isSelf: boolean;
+}) {
   const fileName = message.file_name || "file";
 
   return (
@@ -57,7 +62,9 @@ function FileAttachment({ message, isSelf }: { message: Message; isSelf: boolean
       <span
         className={cn(
           "flex size-10 shrink-0 items-center justify-center rounded-xl",
-          isSelf ? "bg-primary-foreground/15 text-primary-foreground" : "bg-muted text-primary",
+          isSelf
+            ? "bg-primary-foreground/15 text-primary-foreground"
+            : "bg-muted text-primary",
         )}
       >
         <FileText className="size-5" />
@@ -91,7 +98,13 @@ function FileAttachment({ message, isSelf }: { message: Message; isSelf: boolean
   );
 }
 
-function Attachment({ message, isSelf }: { message: Message; isSelf: boolean }) {
+function Attachment({
+  message,
+  isSelf,
+}: {
+  message: Message;
+  isSelf: boolean;
+}) {
   if (message.type === MessageType.Image) {
     return (
       <a href={staticUrl(message.url)} target="_blank" rel="noreferrer">
@@ -124,8 +137,9 @@ export function MessageBubble({
   currentUserName,
   renderAfter,
 }: MessageBubbleProps) {
-  // Call signalling is persisted as type 3 but carries no renderable payload.
-  const conversation = messageList.filter((message) => message.type !== MessageType.AvSignal);
+  const conversation = messageList.filter(
+    (message) => message.type !== MessageType.AvSignal,
+  );
 
   if (conversation.length === 0) {
     return (
@@ -151,7 +165,9 @@ export function MessageBubble({
         const avatar = isSelf ? currentUserAvatar : message.send_avatar;
         const isText = message.type === MessageType.Text;
         const dayKey = messageDayKey(message.created_at);
-        const showDay = index === 0 || messageDayKey(conversation[index - 1].created_at) !== dayKey;
+        const showDay =
+          index === 0 ||
+          messageDayKey(conversation[index - 1].created_at) !== dayKey;
 
         return (
           <div key={message.uuid || `${message.send_id}-${index}`}>
@@ -164,7 +180,10 @@ export function MessageBubble({
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className={cn("flex items-start gap-2.5", isSelf && "flex-row-reverse")}
+              className={cn(
+                "flex items-start gap-2.5",
+                isSelf && "flex-row-reverse",
+              )}
             >
               <Avatar
                 className={cn(
@@ -193,15 +212,16 @@ export function MessageBubble({
                   className={cn(
                     "max-w-full rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed wrap-break-word transition-shadow duration-300",
                     isSelf
-                      ? // Streamdown paints links text-primary — the bubble's
-                        // own background here. They render as <button
-                        // data-streamdown="link">, so target the attribute.
-                        "bg-primary text-primary-foreground hover:shadow-primary/20 **:data-[streamdown=link]:text-primary-foreground rounded-br-md hover:shadow-md"
+                      ? "bg-primary text-primary-foreground hover:shadow-primary/20 **:data-[streamdown=link]:text-primary-foreground rounded-br-md hover:shadow-md"
                       : "border-border bg-card text-foreground rounded-bl-md border shadow-sm hover:shadow-md",
                   )}
                 >
                   {isText ? (
-                    <Suspense fallback={<p className="whitespace-pre-wrap">{message.content}</p>}>
+                    <Suspense
+                      fallback={
+                        <p className="whitespace-pre-wrap">{message.content}</p>
+                      }
+                    >
                       <MessageContent content={message.content} />
                     </Suspense>
                   ) : (

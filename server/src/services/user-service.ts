@@ -122,7 +122,6 @@ export class UserService {
     private readonly issueToken: (uuid: string) => string,
   ) {}
 
-  // Creates the reserved Yukino assistant account on startup.
   async ensureYukinoUser() {
     const existing = await this.db.userInfo.findFirst({
       where: { uuid: YUKINO_UUID },
@@ -163,8 +162,6 @@ export class UserService {
     });
   }
 
-  // Idempotently gives a user the undeletable Yukino contact and a session
-  // pointing at it. Called on register and login.
   async ensureYukinoContact(userId: string) {
     if (userId === "" || isYukino(userId)) return;
     await this.ensureUserContact(userId, YUKINO_UUID);
@@ -222,7 +219,6 @@ export class UserService {
         status: UserStatusNormal,
       },
     });
-    // Every account starts with a default contact tag.
     await this.db.contactTag
       .create({ data: { uuid: newTag(), userId: user.uuid, name: "Friends" } })
       .catch(() => {});
@@ -234,8 +230,6 @@ export class UserService {
     ];
   }
 
-  // Resets the password by telephone; deliberately unauthenticated like the
-  // legacy forgot-password flow.
   async updatePassword(telephone: string, password: string): Promise<[string, number]> {
     const user = await this.db.userInfo.findFirst({
       where: { telephone, deletedAt: null },
@@ -258,8 +252,6 @@ export class UserService {
     return ["password updated", 0];
   }
 
-  // Finds users by telephone or nickname keyword, flagging the ones that are
-  // already contacts of the caller.
   async searchUsers(
     ownerId: string,
     keyword: string,
@@ -317,7 +309,6 @@ export class UserService {
     await this.db.userInfo.update({ where: { uuid }, data: fields });
     await this.cache.deleteUser(uuid);
 
-    // Keep the denormalized session fields in sync with the user profile.
     const sessionFields: { receiveName?: string; avatar?: string } = {};
     if (fields.nickname !== undefined) sessionFields.receiveName = fields.nickname;
     if (fields.avatar !== undefined) sessionFields.avatar = fields.avatar;
@@ -466,8 +457,6 @@ export class UserService {
   }
 }
 
-// Strips the reserved assistant account from admin batch operations so it can
-// never be disabled or deleted.
 function withoutYukino(uuidList: string[]): string[] {
   return uuidList.filter((uuid) => uuid !== YUKINO_UUID);
 }

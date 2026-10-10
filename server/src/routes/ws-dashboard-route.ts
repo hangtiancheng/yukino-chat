@@ -7,8 +7,6 @@ import { isAdmin, wsTokenUUID } from "../middleware/auth.js";
 
 const SNAPSHOT_INTERVAL_MS = 2000;
 
-// Admin cache dashboard: pushes cache snapshot frames (mirroring the Go
-// yukino_cache dashboard protocol) and accepts key deletions.
 export function registerWsDashboardRoute(
   app: Hono<AppEnv>,
   deps: Deps,
@@ -32,9 +30,7 @@ export function registerWsDashboardRoute(
             try {
               const snapshot = await deps.cache.snapshot();
               if (raw.readyState === raw.OPEN) raw.send(JSON.stringify(snapshot));
-            } catch {
-              // Best-effort.
-            }
+            } catch {}
           };
           await push();
           timer = setInterval(() => void push(), SNAPSHOT_INTERVAL_MS);
@@ -50,9 +46,7 @@ export function registerWsDashboardRoute(
             if (cmd.action === "delete" && cmd.group && cmd.key) {
               await deps.cache.deleteKey(cmd.group, cmd.key);
             }
-          } catch {
-            // Ignore malformed commands.
-          }
+          } catch {}
         },
       });
     })();

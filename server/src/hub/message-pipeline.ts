@@ -32,9 +32,6 @@ export interface PipelineDeps {
 }
 
 export class MessagePipeline {
-  // Serializes frame handling like the Go server's single event loop over the
-  // Transmit channel; exceeding the channel cap rejects with the overflow
-  // frame, mirroring the legacy behavior.
   private chain: Promise<void> = Promise.resolve();
   private depth = 0;
 
@@ -84,8 +81,6 @@ export class MessagePipeline {
       return;
     }
 
-    // The sender is whoever owns this connection, never whoever the frame
-    // claims: send_id drives persistence, routing and call-room identity.
     req.send_id = senderId;
     const sender = await this.resolveSender(senderId);
     if (sender) {
@@ -138,7 +133,6 @@ export class MessagePipeline {
       return;
     }
 
-    // Surface the conversation in both sides' session lists before fan-out.
     if (msg.receiveId.startsWith("U")) {
       await this.sessions.touchDirectSessions(msg.sendId, msg.receiveId);
     }
@@ -147,9 +141,6 @@ export class MessagePipeline {
     this.dispatchToYukino(msg);
   }
 
-  // Reads the authoritative display fields for a user so a client cannot
-  // spoof someone else's name or avatar. Returns null when unavailable, in
-  // which case the caller keeps what the client sent.
   private async resolveSender(uuid: string): Promise<ResolvedSender | null> {
     let cached = await this.cache.getUser<CachedUser>(uuid);
     if (!cached) {
@@ -177,7 +168,6 @@ export class MessagePipeline {
     return { name: cached.nickname, avatar: cached.avatar };
   }
 
-  // Delivers the message to its receiver(s).
   private async broadcast(
     req: ChatFrame,
     msg: {
@@ -255,9 +245,6 @@ export class MessagePipeline {
       .catch(() => {});
   }
 
-  // Interprets audio/video signaling. Call lifecycle frames go through the
-  // call manager for busy tracking and room membership; sdp/candidate frames
-  // are relayed point-to-point.
   private async handleAVMessage(
     req: ChatFrame,
     msg: {
@@ -279,11 +266,8 @@ export class MessagePipeline {
     let av: AVSignal = { messageId: "", type: "", media: "", room_id: "" };
     try {
       av = { ...av, ...(JSON.parse(req.av_data) as Partial<AVSignal>) };
-    } catch {
-      // Zero values, like the Go unmarshal ignoring errors.
-    }
+    } catch {}
 
-    // Only persist certain AV signals.
     if (
       av.messageId === "PROXY" &&
       ["start_call", "receive_call", "reject_call"].includes(av.type)
@@ -320,22 +304,17 @@ export class MessagePipeline {
       return;
     }
     if (av.messageId === "PROXY" && av.type === "receive_call") {
-      // 1v1 accept: the callee joins the pair room, then the caller is told
-      // to create the offer. AV signaling never echoes back to the sender.
       this.calls.join(roomId, msg.sendId);
       await this.broadcast(req, msg, false);
       return;
     }
     if (av.messageId === "PROXY" && av.type === "join_call") {
-      // Group accept: existing members are notified so each one creates an
-      // offer towards the newcomer.
       const others = this.calls.members(roomId).filter((m) => m !== msg.sendId);
       this.calls.join(roomId, msg.sendId);
       this.sendAVToUsers(req, msg, others);
       return;
     }
     if (av.messageId === "PROXY" && av.type === "reject_call") {
-      // Decline: free everyone in a 1v1 pair room; group calls continue.
       if (msg.receiveId.startsWith("U")) {
         for (const member of this.calls.members(roomId)) {
           this.calls.leave(member);
@@ -351,19 +330,14 @@ export class MessagePipeline {
         this.sendAVToUsers(req, msg, remaining);
         for (const m of remaining) notified.add(m);
       }
-      // A caller hanging up before the callee answered must still close the
-      // callee's incoming-call popup.
       if (msg.receiveId.startsWith("U") && !notified.has(msg.receiveId)) {
         await this.broadcast(req, msg, false);
       }
       return;
     }
-    // sdp / candidate and any custom frames: plain relay.
     await this.broadcast(req, msg, false);
   }
 
-  // Validates availability, marks the caller busy and invites the callee(s).
-  // Failures are reported back to the caller as call_failed.
   private async handleStartCall(
     req: ChatFrame,
     msg: {
@@ -441,7 +415,6 @@ export class MessagePipeline {
     }
   }
 
-  // Relays an AV frame to an explicit target list.
   private sendAVToUsers(
     req: ChatFrame,
     msg: {
@@ -479,7 +452,6 @@ export class MessagePipeline {
     this.hub.sendRaw(JSON.stringify(item), targets);
   }
 
-  // Reports a failed call attempt back to the caller.
   private sendCallFailed(uuid: string, roomId: string, reason: string) {
     const item: MessageListItem = {
       uuid: "",
@@ -504,9 +476,6 @@ export class MessagePipeline {
     this.hub.sendRaw(JSON.stringify(item), [uuid]);
   }
 
-  // Routes a stored direct message into the assistant owned by its sender.
-  // Group threads are deliberately left out: Yukino only takes part in
-  // one-to-one conversations.
   private dispatchToYukino(msg: {
     uuid: string;
     sessionId: string;
@@ -518,8 +487,6 @@ export class MessagePipeline {
     if (!isYukino(msg.receiveId) || msg.sendId === YUKINO_UUID) return;
     if (!this.agent) return;
     if (msg.type !== MessageText) {
-      // Uploads are hidden in the assistant thread, so anything else here came
-      // from another client and deserves an answer rather than silence.
       this.agent.saveAssistantText(
         msg.sendId,
         msg.sessionId,
@@ -540,8 +507,6 @@ function coerceFrame(parsed: unknown): ChatFrame {
   if (typeof typeVal !== "number" || !Number.isInteger(typeVal)) {
     throw new Error("invalid type");
   }
-  // Like Go's json.Unmarshal: missing string fields are zero values; only a
-  // wrong-typed field rejects the frame.
   const frame: ChatFrame = {
     session_id: "",
     type: typeVal,

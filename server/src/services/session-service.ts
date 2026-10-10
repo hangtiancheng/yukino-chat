@@ -14,7 +14,6 @@ import {
   UserStatusDisable,
 } from "../hub/frame-types.js";
 
-// Wire shapes.
 export interface UserSessionItem {
   session_id: string;
   avatar: string;
@@ -48,8 +47,6 @@ interface SessionMeta {
   sortKey: number;
 }
 
-// Cached session rows keep only the fields the list endpoints need; timestamps
-// are epoch millis so JSON round-trips are lossless.
 export interface CachedSession {
   uuid: string;
   receiveId: string;
@@ -97,8 +94,6 @@ export class SessionService {
     }
   }
 
-  // Computes the latest visible message and the unread count for one session.
-  // AV signaling frames (type 3) never surface in previews.
   private async enrichSession(ownerId: string, s: Session): Promise<SessionMeta> {
     const meta: SessionMeta = {
       lastMessage: "",
@@ -170,7 +165,6 @@ export class SessionService {
         });
       }
     }
-    // V8's Array.prototype.sort is stable.
     userEntries.sort((a, b) => b.key - a.key);
     groupEntries.sort((a, b) => b.key - a.key);
     return {
@@ -187,8 +181,6 @@ export class SessionService {
     return ["success", (await this.enrichAll(ownerId)).group, 0];
   }
 
-  // Drops the cached session list of every user that has a session pointing
-  // at the given receiver.
   async invalidateSessionCacheByReceiver(receiveId: string) {
     const owners = await this.db.session.findMany({
       where: { receiveId, deletedAt: null },
@@ -245,8 +237,6 @@ export class SessionService {
     }
   }
 
-  // Returns the caller's active sessions, served through the read-through
-  // session cache.
   async loadSessions(ownerId: string): Promise<Session[]> {
     const cached = await this.cache.getSessionList<CachedSession[]>(ownerId);
     if (cached) return cached.map(fromCached);
@@ -287,8 +277,6 @@ export class SessionService {
     return ["marked as read", 0];
   }
 
-  // Guarantees the owner has an active session pointing at peer, restoring a
-  // soft-deleted one or creating it from the peer's profile.
   async ensurePeerSession(ownerId: string, peerId: string) {
     const session = await this.db.session.findFirst({
       where: { sendId: ownerId, receiveId: peerId },
@@ -306,14 +294,11 @@ export class SessionService {
     }
   }
 
-  // Makes a direct message surface in both participants' session lists.
   async touchDirectSessions(sendId: string, receiveId: string) {
     await this.ensurePeerSession(sendId, receiveId);
     await this.ensurePeerSession(receiveId, sendId);
   }
 
-  // Guarantees every group member has an active session for the group,
-  // restoring soft-deleted ones and creating missing ones in bulk.
   async touchGroupSessions(group: GroupInfo) {
     if (group.members.length === 0) return;
     const existing = await this.db.session.findMany({

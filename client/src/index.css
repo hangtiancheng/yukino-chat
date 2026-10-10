@@ -3,7 +3,6 @@
 @import "shadcn/tailwind.css";
 @import "streamdown/styles.css";
 
-/* Streamdown emits utility classes from its own bundle. */
 @source "../node_modules/streamdown/dist/*.js";
 
 @custom-variant dark (&:is(.dark *));
@@ -11,11 +10,11 @@
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans:
-    'Yukino', 'Maple Mono', Menlo, 'Cascadia Code', 'Sarasa Gothic SC', 'PingFang SC',
-    'Microsoft YaHei', sans-serif;
+    "Yukino", "Maple Mono", Menlo, "Cascadia Code", "Sarasa Gothic SC",
+    "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-mono:
-    'Yukino', 'Maple Mono', Menlo, 'Cascadia Code', 'Sarasa Gothic SC', 'PingFang SC',
-    'Microsoft YaHei', monospace;
+    "Yukino", "Maple Mono", Menlo, "Cascadia Code", "Sarasa Gothic SC",
+    "PingFang SC", "Microsoft YaHei", monospace;
 
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -68,7 +67,6 @@
 :root {
   --radius: 0.625rem;
 
-  /* Soft rose-pink theme */
   --background: oklch(0.97 0.008 350);
   --foreground: oklch(0.25 0.02 350);
 
@@ -125,7 +123,6 @@
 .dark {
   color-scheme: dark;
 
-  /* Same rose-pink hue, inverted luminance */
   --background: oklch(0.19 0.015 350);
   --foreground: oklch(0.95 0.01 350);
 

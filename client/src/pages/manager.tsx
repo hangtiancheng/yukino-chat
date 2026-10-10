@@ -32,7 +32,13 @@ interface BulkAction {
   staleKey: readonly unknown[];
 }
 
-function SelectionBar({ count, children }: { count: number; children: React.ReactNode }) {
+function SelectionBar({
+  count,
+  children,
+}: {
+  count: number;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <span className="text-muted-foreground text-xs tabular-nums">
@@ -55,7 +61,8 @@ export default function Manager() {
   const groups = useQuery(adminGroupsQuery());
 
   const bulk = useMutation({
-    mutationFn: ({ action, ids }: { action: BulkAction; ids: string[] }) => action.run(ids),
+    mutationFn: ({ action, ids }: { action: BulkAction; ids: string[] }) =>
+      action.run(ids),
     onSuccess: (_result, { action }) => {
       showToast(action.done, "success");
       void queryClient.invalidateQueries({ queryKey: action.staleKey });
@@ -142,14 +149,20 @@ export default function Manager() {
     },
   };
 
-  const allUsersSelected = userRows.length > 0 && selectedUsers.length === userRows.length;
-  const allGroupsSelected = groupRows.length > 0 && selectedGroups.length === groupRows.length;
+  const allUsersSelected =
+    userRows.length > 0 && selectedUsers.length === userRows.length;
+  const allGroupsSelected =
+    groupRows.length > 0 && selectedGroups.length === groupRows.length;
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-3 p-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Administration</h2>
-        <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate("/dashboard")}
+        >
           <ChartBar className="size-3.5" />
           Cache Dashboard
         </Button>
@@ -163,19 +176,39 @@ export default function Manager() {
 
         <TabsContent value="users" className="flex min-h-0 flex-col gap-2">
           <SelectionBar count={selectedUsers.length}>
-            <Button size="sm" variant="outline" onClick={() => runOnUsers(userActions.enable)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => runOnUsers(userActions.enable)}
+            >
               Enable
             </Button>
-            <Button size="sm" variant="outline" onClick={() => runOnUsers(userActions.disable)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => runOnUsers(userActions.disable)}
+            >
               Disable
             </Button>
-            <Button size="sm" variant="outline" onClick={() => runOnUsers(userActions.promote)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => runOnUsers(userActions.promote)}
+            >
               Grant Admin
             </Button>
-            <Button size="sm" variant="outline" onClick={() => runOnUsers(userActions.demote)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => runOnUsers(userActions.demote)}
+            >
               Revoke Admin
             </Button>
-            <Button size="sm" variant="destructive" onClick={() => runOnUsers(userActions.remove)}>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => runOnUsers(userActions.remove)}
+            >
               Delete
             </Button>
           </SelectionBar>
@@ -191,7 +224,11 @@ export default function Manager() {
                     <Checkbox
                       checked={allUsersSelected}
                       onCheckedChange={(checked) =>
-                        setSelectedUsers(checked === true ? userRows.map((row) => row.uuid) : [])
+                        setSelectedUsers(
+                          checked === true
+                            ? userRows.map((row) => row.uuid)
+                            : [],
+                        )
                       }
                     />
                   </TableHead>
@@ -204,7 +241,10 @@ export default function Manager() {
               <TableBody>
                 {usersPaddingTop > 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} style={{ height: usersPaddingTop }} />
+                    <TableCell
+                      colSpan={5}
+                      style={{ height: usersPaddingTop }}
+                    />
                   </TableRow>
                 )}
                 {userItems.map((item) => {
@@ -213,46 +253,71 @@ export default function Manager() {
                     <TableRow
                       key={row.uuid}
                       className="cursor-pointer"
-                      onClick={() => setSelectedUsers((previous) => xor(previous, [row.uuid]))}
+                      onClick={() =>
+                        setSelectedUsers((previous) =>
+                          xor(previous, [row.uuid]),
+                        )
+                      }
                     >
                       <TableCell>
                         <Checkbox
                           checked={selectedUsers.includes(row.uuid)}
                           onCheckedChange={() =>
-                            setSelectedUsers((previous) => xor(previous, [row.uuid]))
+                            setSelectedUsers((previous) =>
+                              xor(previous, [row.uuid]),
+                            )
                           }
                         />
                       </TableCell>
                       <TableCell>{row.nickname}</TableCell>
                       <TableCell>{row.telephone}</TableCell>
-                      <TableCell className="font-mono text-xs">{row.uuid}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {row.uuid}
+                      </TableCell>
                       <TableCell className="flex gap-1">
                         {row.is_admin === 1 && <Badge>admin</Badge>}
-                        {row.status === BANNED && <Badge variant="destructive">banned</Badge>}
-                        {row.is_deleted && <Badge variant="secondary">deleted</Badge>}
+                        {row.status === BANNED && (
+                          <Badge variant="destructive">banned</Badge>
+                        )}
+                        {row.is_deleted && (
+                          <Badge variant="secondary">deleted</Badge>
+                        )}
                       </TableCell>
                     </TableRow>
                   );
                 })}
                 {usersPaddingBottom > 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} style={{ height: usersPaddingBottom }} />
+                    <TableCell
+                      colSpan={5}
+                      style={{ height: usersPaddingBottom }}
+                    />
                   </TableRow>
                 )}
               </TableBody>
             </Table>
             {users.isPending && (
-              <p className="text-muted-foreground animate-pulse p-4 text-sm">Loading users…</p>
+              <p className="text-muted-foreground animate-pulse p-4 text-sm">
+                Loading users…
+              </p>
             )}
           </div>
         </TabsContent>
 
         <TabsContent value="groups" className="flex min-h-0 flex-col gap-2">
           <SelectionBar count={selectedGroups.length}>
-            <Button size="sm" variant="outline" onClick={() => runOnGroups(groupActions.enable)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => runOnGroups(groupActions.enable)}
+            >
               Enable
             </Button>
-            <Button size="sm" variant="outline" onClick={() => runOnGroups(groupActions.disable)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => runOnGroups(groupActions.disable)}
+            >
               Disable
             </Button>
             <Button
@@ -276,7 +341,9 @@ export default function Manager() {
                       checked={allGroupsSelected}
                       onCheckedChange={(checked) =>
                         setSelectedGroups(
-                          checked === true ? groupRows.map((row) => row.group_id) : [],
+                          checked === true
+                            ? groupRows.map((row) => row.group_id)
+                            : [],
                         )
                       }
                     />
@@ -290,7 +357,10 @@ export default function Manager() {
               <TableBody>
                 {groupsPaddingTop > 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} style={{ height: groupsPaddingTop }} />
+                    <TableCell
+                      colSpan={5}
+                      style={{ height: groupsPaddingTop }}
+                    />
                   </TableRow>
                 )}
                 {groupItems.map((item) => {
@@ -299,35 +369,54 @@ export default function Manager() {
                     <TableRow
                       key={row.group_id}
                       className="cursor-pointer"
-                      onClick={() => setSelectedGroups((previous) => xor(previous, [row.group_id]))}
+                      onClick={() =>
+                        setSelectedGroups((previous) =>
+                          xor(previous, [row.group_id]),
+                        )
+                      }
                     >
                       <TableCell>
                         <Checkbox
                           checked={selectedGroups.includes(row.group_id)}
                           onCheckedChange={() =>
-                            setSelectedGroups((previous) => xor(previous, [row.group_id]))
+                            setSelectedGroups((previous) =>
+                              xor(previous, [row.group_id]),
+                            )
                           }
                         />
                       </TableCell>
                       <TableCell>{row.name}</TableCell>
-                      <TableCell className="font-mono text-xs">{row.owner_id}</TableCell>
-                      <TableCell className="tabular-nums">{row.member_cnt}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {row.owner_id}
+                      </TableCell>
+                      <TableCell className="tabular-nums">
+                        {row.member_cnt}
+                      </TableCell>
                       <TableCell className="flex gap-1">
-                        {row.status === BANNED && <Badge variant="destructive">disabled</Badge>}
-                        {row.is_deleted && <Badge variant="secondary">deleted</Badge>}
+                        {row.status === BANNED && (
+                          <Badge variant="destructive">disabled</Badge>
+                        )}
+                        {row.is_deleted && (
+                          <Badge variant="secondary">deleted</Badge>
+                        )}
                       </TableCell>
                     </TableRow>
                   );
                 })}
                 {groupsPaddingBottom > 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} style={{ height: groupsPaddingBottom }} />
+                    <TableCell
+                      colSpan={5}
+                      style={{ height: groupsPaddingBottom }}
+                    />
                   </TableRow>
                 )}
               </TableBody>
             </Table>
             {groups.isPending && (
-              <p className="text-muted-foreground animate-pulse p-4 text-sm">Loading groups…</p>
+              <p className="text-muted-foreground animate-pulse p-4 text-sm">
+                Loading groups…
+              </p>
             )}
           </div>
         </TabsContent>

@@ -3,8 +3,6 @@ import type { ReactNode } from "react";
 
 import { Label } from "@/components/ui/label";
 
-/** react-form yields Standard Schema issue objects, but a plain function
- * validator yields whatever it returned, so both shapes must be handled. */
 function firstMessage(errors: readonly unknown[]): string | undefined {
   for (const error of errors) {
     if (typeof error === "string") return error;
@@ -23,7 +21,12 @@ interface FormFieldProps {
   children: ReactNode;
 }
 
-export function FormField({ label, htmlFor, errors, children }: FormFieldProps) {
+export function FormField({
+  label,
+  htmlFor,
+  errors,
+  children,
+}: FormFieldProps) {
   const message = firstMessage(errors);
   return (
     <div className="flex flex-col gap-2">

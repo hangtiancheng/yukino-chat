@@ -23,7 +23,6 @@ export function errorMessage(error: unknown): string {
   return "Unexpected error";
 }
 
-/** Every handler answers HTTP 200 and puts the real status in the body. */
 const envelopeSchema = z.object({
   code: z.number(),
   message: z.string().default(""),
@@ -35,7 +34,6 @@ function withTimeout(timeoutMs: number, signal?: AbortSignal): AbortSignal {
   return signal ? AbortSignal.any([signal, timeout]) : timeout;
 }
 
-/** The token never refreshes, so an expired one can only be resolved by re-login. */
 function handleUnauthorized() {
   useAuthStore.getState().clearAuth();
   if (window.location.pathname !== "/login") {
@@ -61,19 +59,28 @@ async function send(
       signal: withTimeout(timeoutMs, signal),
     });
   } catch (error) {
-    // A caller-initiated abort (react-query cancellation) must stay an abort.
     if (signal?.aborted) throw error;
-    const timedOut = error instanceof DOMException && error.name === "TimeoutError";
-    throw new ApiError(NETWORK_ERROR_CODE, timedOut ? "Request timed out" : "Network error");
+    const timedOut =
+      error instanceof DOMException && error.name === "TimeoutError";
+    throw new ApiError(
+      NETWORK_ERROR_CODE,
+      timedOut ? "Request timed out" : "Network error",
+    );
   }
 
   if (!response.ok) {
-    throw new ApiError(response.status, `HTTP ${response.status}: ${response.statusText}`);
+    throw new ApiError(
+      response.status,
+      `HTTP ${response.status}: ${response.statusText}`,
+    );
   }
 
   const envelope = envelopeSchema.safeParse(await response.json());
   if (!envelope.success) {
-    throw new ApiError(NETWORK_ERROR_CODE, `Malformed response from ${endpoint}`);
+    throw new ApiError(
+      NETWORK_ERROR_CODE,
+      `Malformed response from ${endpoint}`,
+    );
   }
 
   if (envelope.data.code === UNAUTHORIZED) {
@@ -85,7 +92,11 @@ async function send(
   return envelope.data.data;
 }
 
-function parse<S extends z.ZodType>(endpoint: string, schema: S, data: unknown): z.output<S> {
+function parse<S extends z.ZodType>(
+  endpoint: string,
+  schema: S,
+  data: unknown,
+): z.output<S> {
   const result = schema.safeParse(data);
   if (!result.success) {
     throw new ApiError(
@@ -96,7 +107,6 @@ function parse<S extends z.ZodType>(endpoint: string, schema: S, data: unknown):
   return result.data;
 }
 
-/** POST JSON and validate the `data` field of the envelope. */
 export async function post<S extends z.ZodType>(
   endpoint: string,
   schema: S,
@@ -116,7 +126,6 @@ export async function post<S extends z.ZodType>(
   return parse(endpoint, schema, data);
 }
 
-/** POST JSON to an endpoint whose envelope carries no `data`. */
 export async function postVoid(
   endpoint: string,
   body?: unknown,
@@ -134,7 +143,6 @@ export async function postVoid(
   );
 }
 
-/** POST multipart form data; the browser sets the boundary header itself. */
 export async function upload<S extends z.ZodType>(
   endpoint: string,
   schema: S,

@@ -48,11 +48,6 @@ interface PromptJob {
 
 type Handle = Remote.Server.RemoteAgentHandle;
 
-// A long-lived, per-user agent runtime. One instance owns the Yukino agent
-// stack (via createRemoteAgent), the DB session row used for rehydration, and
-// the set of attached /agent/ws connections. Prompts are serialized through a
-// single worker queue; each turn constructs a fresh Agent with the session's
-// permission mode. Mirrors the Go bridge's per-user Session.
 export class AgentRuntime {
   readonly userId: string;
   readonly workDir: string;
@@ -89,7 +84,6 @@ export class AgentRuntime {
     this.permissionMode = normalizeMode(options.config.permissionMode);
   }
 
-  // DB session row + full agent stack, created once and reused.
   private ensureReady(): Promise<Handle> {
     if (this.handlePromise) return this.handlePromise;
     this.handlePromise = (async () => {
@@ -112,9 +106,6 @@ export class AgentRuntime {
     return this.handlePromise;
   }
 
-  // Restores the conversation from the DB context snapshot. Wrappers that are
-  // re-derivable (<system-reminder> memory/MCP injections) are dropped so
-  // they don't accumulate across restarts.
   private async rehydrate(handle: Handle) {
     handle.conv.reset();
     const { messages } = await this.stores.loadContext(this.sessionId);
@@ -129,8 +120,6 @@ export class AgentRuntime {
       ...handle.activeSkills.keys(),
     ]);
   }
-
-  // ---- connections ----
 
   get connectionCount(): number {
     return this.connections.size;
@@ -183,10 +172,6 @@ export class AgentRuntime {
     };
   }
 
-  // ---- prompt queue ----
-
-  // Enqueues a chat prompt; the queue cap mirrors the Go bridge (overflow
-  // tells the user Yukino is still catching up).
   dispatch(job: PromptJob) {
     if (this.disposed) return;
     if (this.queue.length >= env.AGENT_QUEUE_CAP) {
@@ -221,8 +206,6 @@ export class AgentRuntime {
       this.workerActive = false;
     }
   }
-
-  // ---- turns ----
 
   private async runTurn(job: PromptJob) {
     let handle: Handle;
@@ -265,9 +248,6 @@ export class AgentRuntime {
       checker,
       conversation: handle.conv,
       workDir: this.workDir,
-      // Session persistence is DB-only: an empty sessionId disables the
-      // library's own JSONL session writes so the DB context stays
-      // authoritative.
       sessionId: "",
       fileHistory: handle.fileHistory,
       fileStateCache: handle.fileStateCache,
@@ -322,8 +302,6 @@ export class AgentRuntime {
     }
   }
 
-  // Files one finalized text block as an ordinary chat message and announces
-  // its uuid so the client can anchor the bubble.
   private async flushText(_handle: Handle, chatSessionId: string, adapter: EventAdapter) {
     const text = adapter.takeStreamText();
     if (text === "") return;
@@ -331,8 +309,6 @@ export class AgentRuntime {
     if (messageId) this.anchorId = messageId;
     this.notifyAll("agent/stream_end", { text, messageId });
   }
-
-  // ---- human-in-the-loop ----
 
   private async askUser(
     questions: QuestionRequestParams["questions"],
@@ -345,8 +321,6 @@ export class AgentRuntime {
     const answers = await this.broker.requestAnswers(params);
     return answers;
   }
-
-  // ---- slash commands ----
 
   private async handleCommand(handle: Handle, job: PromptJob) {
     const [name, args] = splitCommand(job.content);
@@ -400,8 +374,6 @@ export class AgentRuntime {
     }
   }
 
-  // ---- control ----
-
   resolvePermission(id: string, decision: "allow" | "deny" | "allowAlways"): boolean {
     return this.broker.resolvePermission(id, decision);
   }
@@ -416,7 +388,6 @@ export class AgentRuntime {
     this.broker.cancelAll("run cancelled");
   }
 
-  // Idempotent teardown used by idle eviction and shutdown.
   async dispose() {
     if (this.disposed) return;
     this.disposed = true;
@@ -438,8 +409,6 @@ export class AgentRuntime {
   }
 }
 
-// The chat sink files assistant replies as ordinary chat messages; the
-// manager owns the DB/hub plumbing, the runtime just calls back.
 export function makeWorkDir(root: string, userId: string): string {
   return path.join(root, ".yukino", "chat", userId);
 }

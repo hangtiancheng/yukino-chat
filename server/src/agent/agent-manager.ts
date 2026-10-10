@@ -10,9 +10,6 @@ import { loadAgentConfig } from "./yukino-config.js";
 
 const IDLE_SWEEP_INTERVAL_MS = 60_000;
 
-// Registry of per-user agent runtimes: lazy creation, idle eviction (30 min,
-// like the Go bridge's sweep), and the chat-message sink that files assistant
-// replies as ordinary messages.
 export class AgentManager {
   private runtimes = new Map<string, AgentRuntime>();
   private readonly stores: AgentStores;
@@ -67,10 +64,6 @@ export class AgentManager {
     return runtime;
   }
 
-  // Files the assistant's reply as an ordinary chat message and broadcasts it
-  // on the chat socket — the same insert-and-broadcast path a human peer
-  // takes, which is what gives Yukino working history, session previews and
-  // unread counts for free. Returns the message uuid for stream_end.
   private makeSink(): ChatSink {
     return {
       saveAssistantText: async (userId, chatSessionId, text) => {
@@ -123,13 +116,10 @@ export class AgentManager {
     };
   }
 
-  // Routes a stored direct message into the runtime owned by its sender.
   dispatch(userId: string, chatSessionId: string, messageId: string, content: string) {
     void this.getOrCreate(userId)
       .then((runtime) => runtime.dispatch({ chatSessionId, messageId, content }))
       .catch((err) => {
-        // Unconfigured or failed runtime: answer as a chat message so the
-        // assistant thread reports itself unavailable.
         void this.sink.saveAssistantText(
           userId,
           chatSessionId,

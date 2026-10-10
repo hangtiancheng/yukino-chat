@@ -47,11 +47,12 @@ export interface GroupPatch {
 }
 
 export const auth = {
-  login: (body: Credentials, signal?: AbortSignal) => post("/login", authSchema, body, signal),
+  login: (body: Credentials, signal?: AbortSignal) =>
+    post("/login", authSchema, body, signal),
   register: (body: Credentials & { nickname: string }, signal?: AbortSignal) =>
     post("/register", authSchema, body, signal),
-  /** Public endpoint: resets by telephone, no current password required. */
-  updatePassword: (body: Credentials) => postVoid("/user/update-password", body),
+  updatePassword: (body: Credentials) =>
+    postVoid("/user/update-password", body),
 };
 
 export const user = {
@@ -65,13 +66,22 @@ export const user = {
       { owner_id: ownerId, keyword },
       signal,
     ),
-  wsLogout: (ownerId: string) => postVoid("/user/ws-logout", { owner_id: ownerId }),
+  wsLogout: (ownerId: string) =>
+    postVoid("/user/ws-logout", { owner_id: ownerId }),
 
   listAll: (ownerId: string, signal?: AbortSignal) =>
-    post("/user/get-user-info-list", wireList(adminUserSchema), { owner_id: ownerId }, signal),
-  enable: (uuidList: string[]) => postVoid("/user/able-users", { uuid_list: uuidList }),
-  disable: (uuidList: string[]) => postVoid("/user/disable-users", { uuid_list: uuidList }),
-  remove: (uuidList: string[]) => postVoid("/user/delete-users", { uuid_list: uuidList }),
+    post(
+      "/user/get-user-info-list",
+      wireList(adminUserSchema),
+      { owner_id: ownerId },
+      signal,
+    ),
+  enable: (uuidList: string[]) =>
+    postVoid("/user/able-users", { uuid_list: uuidList }),
+  disable: (uuidList: string[]) =>
+    postVoid("/user/disable-users", { uuid_list: uuidList }),
+  remove: (uuidList: string[]) =>
+    postVoid("/user/delete-users", { uuid_list: uuidList }),
   setAdmin: (uuidList: string[], isAdmin: number) =>
     postVoid("/user/set-admin", { uuid_list: uuidList, is_admin: isAdmin }),
 };
@@ -85,26 +95,60 @@ export const contact = {
       signal,
     ),
   friends: (ownerId: string, signal?: AbortSignal) =>
-    post("/contact/get-user-list", wireList(friendSchema), { owner_id: ownerId }, signal),
+    post(
+      "/contact/get-user-list",
+      wireList(friendSchema),
+      { owner_id: ownerId },
+      signal,
+    ),
   tags: (ownerId: string, signal?: AbortSignal) =>
-    post("/contact/get-tag-list", wireList(tagSchema), { owner_id: ownerId }, signal),
+    post(
+      "/contact/get-tag-list",
+      wireList(tagSchema),
+      { owner_id: ownerId },
+      signal,
+    ),
   addTag: (ownerId: string, name: string) =>
     post("/contact/add-tag", tagSchema, { owner_id: ownerId, name }),
-  /** Omit a field to leave it unchanged. */
-  update: (body: { user_id: string; contact_id: string; note_name?: string; tag_id?: string }) =>
-    postVoid("/contact/update-contact", body),
+  update: (body: {
+    user_id: string;
+    contact_id: string;
+    note_name?: string;
+    tag_id?: string;
+  }) => postVoid("/contact/update-contact", body),
   joinedGroups: (ownerId: string, signal?: AbortSignal) =>
-    post("/contact/load-my-joined-group", wireList(myGroupSchema), { owner_id: ownerId }, signal),
-  apply: (body: { user_id: string; contact_id: string; contact_type: number; message: string }) =>
-    postVoid("/contact/apply-contact", body),
+    post(
+      "/contact/load-my-joined-group",
+      wireList(myGroupSchema),
+      { owner_id: ownerId },
+      signal,
+    ),
+  apply: (body: {
+    user_id: string;
+    contact_id: string;
+    contact_type: number;
+    message: string;
+  }) => postVoid("/contact/apply-contact", body),
   contactApplies: (userId: string, signal?: AbortSignal) =>
-    post("/contact/get-new-contact-list", wireList(applySchema), { user_id: userId }, signal),
+    post(
+      "/contact/get-new-contact-list",
+      wireList(applySchema),
+      { user_id: userId },
+      signal,
+    ),
   groupApplies: (userId: string, signal?: AbortSignal) =>
-    post("/contact/get-add-group-list", wireList(applySchema), { user_id: userId }, signal),
-  passApply: (applyId: string) => postVoid("/contact/pass-contact-apply", { apply_id: applyId }),
+    post(
+      "/contact/get-add-group-list",
+      wireList(applySchema),
+      { user_id: userId },
+      signal,
+    ),
+  passApply: (applyId: string) =>
+    postVoid("/contact/pass-contact-apply", { apply_id: applyId }),
   refuseApply: (applyId: string) =>
     postVoid("/contact/refuse-contact-apply", { apply_id: applyId }),
-  blackApply: (applyId: string) => postVoid("/contact/black-apply", { apply_id: applyId }),
+  blackApply: (applyId: string) =>
+    postVoid("/contact/black-apply", { apply_id: applyId }),
   remove: (userId: string, contactId: string) =>
     postVoid("/contact/delete-contact", {
       user_id: userId,
@@ -124,7 +168,12 @@ export const contact = {
 
 export const session = {
   open: (sendId: string, receiveId: string, signal?: AbortSignal) =>
-    post("/session/open-session", z.string(), { send_id: sendId, receive_id: receiveId }, signal),
+    post(
+      "/session/open-session",
+      z.string(),
+      { send_id: sendId, receive_id: receiveId },
+      signal,
+    ),
   userList: (ownerId: string, signal?: AbortSignal) =>
     post(
       "/session/get-user-session-list",
@@ -165,7 +214,12 @@ export const message = {
       signal,
     ),
   withGroup: (groupId: string, signal?: AbortSignal) =>
-    post("/message/get-group-message-list", wireList(messageSchema), { group_id: groupId }, signal),
+    post(
+      "/message/get-group-message-list",
+      wireList(messageSchema),
+      { group_id: groupId },
+      signal,
+    ),
   uploadAvatar: (file: File, signal?: AbortSignal) => {
     const form = new FormData();
     form.append("file", file);
@@ -187,9 +241,19 @@ export const group = {
     add_mode?: number;
   }) => postVoid("/group/create-group", body),
   mine: (ownerId: string, signal?: AbortSignal) =>
-    post("/group/load-my-group", wireList(myGroupSchema), { owner_id: ownerId }, signal),
+    post(
+      "/group/load-my-group",
+      wireList(myGroupSchema),
+      { owner_id: ownerId },
+      signal,
+    ),
   info: (groupId: string, signal?: AbortSignal) =>
-    post("/group/get-group-info", groupInfoSchema, { group_id: groupId }, signal),
+    post(
+      "/group/get-group-info",
+      groupInfoSchema,
+      { group_id: groupId },
+      signal,
+    ),
   update: (body: GroupPatch) => postVoid("/group/update-group-info", body),
   members: (groupId: string, signal?: AbortSignal) =>
     post(
@@ -217,7 +281,8 @@ export const group = {
     ),
   leave: (userId: string, groupId: string) =>
     postVoid("/group/leave-group", { user_id: userId, group_id: groupId }),
-  dismiss: (groupId: string) => postVoid("/group/dismiss-group", { group_id: groupId }),
+  dismiss: (groupId: string) =>
+    postVoid("/group/dismiss-group", { group_id: groupId }),
   addMode: (groupId: string) =>
     post("/group/check-group-add-mode", z.number(), { group_id: groupId }),
   enterDirectly: (userId: string, groupId: string) =>
@@ -228,7 +293,8 @@ export const group = {
 
   listAll: (signal?: AbortSignal) =>
     post("/group/get-group-info-list", wireList(adminGroupSchema), {}, signal),
-  removeAll: (uuidList: string[]) => postVoid("/group/delete-groups", { uuid_list: uuidList }),
+  removeAll: (uuidList: string[]) =>
+    postVoid("/group/delete-groups", { uuid_list: uuidList }),
   setStatus: (uuidList: string[], status: number) =>
     postVoid("/group/set-groups-status", { uuid_list: uuidList, status }),
 };
@@ -256,7 +322,12 @@ export const chatroom = {
   onlineUsers: (signal?: AbortSignal) =>
     post("/chatroom/get-online-users", wireList(z.string()), {}, signal),
   callers: (roomId: string, signal?: AbortSignal) =>
-    post("/chatroom/get-callers", wireList(z.string()), { room_id: roomId }, signal),
+    post(
+      "/chatroom/get-callers",
+      wireList(z.string()),
+      { room_id: roomId },
+      signal,
+    ),
 };
 
 export const api = {

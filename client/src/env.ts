@@ -15,9 +15,10 @@ const withoutTrailingSlash = (url: string) => url.replace(/\/+$/, "");
 
 export const apiUrl = withoutTrailingSlash(env.VITE_API_URL);
 
-export const wsUrl = withoutTrailingSlash(env.VITE_WS_URL ?? apiUrl.replace(/^http/, "ws"));
+export const wsUrl = withoutTrailingSlash(
+  env.VITE_WS_URL ?? apiUrl.replace(/^http/, "ws"),
+);
 
-/** Upload endpoints answer with root-relative "/static/..." paths. */
 export function staticUrl(path: string): string {
   if (!path) return "";
   if (/^(https?:|wss?:|data:|blob:)/.test(path)) return path;

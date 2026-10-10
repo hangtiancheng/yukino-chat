@@ -33,14 +33,19 @@ interface CreateGroupDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps) {
+export function CreateGroupDialog({
+  open,
+  onOpenChange,
+}: CreateGroupDialogProps) {
   const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.userInfo.uuid);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   const create = useMutation({
     mutationFn: async (values: CreateGroupValues) => {
-      const avatar = avatarFile ? (await message.uploadAvatar(avatarFile)).url : "";
+      const avatar = avatarFile
+        ? (await message.uploadAvatar(avatarFile)).url
+        : "";
       await group.create({
         name: values.name,
         owner_id: userId,
@@ -139,7 +144,9 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
                 <Label>Join Mode</Label>
                 <RadioGroup
                   value={String(field.state.value)}
-                  onValueChange={(value) => field.handleChange(Number(value) === 1 ? 1 : 0)}
+                  onValueChange={(value) =>
+                    field.handleChange(Number(value) === 1 ? 1 : 0)
+                  }
                   className="flex gap-4"
                 >
                   <div className="flex items-center gap-2">
@@ -171,14 +178,19 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
               <input {...getInputProps()} />
               {avatarFile ? (
                 <Avatar className="size-9">
-                  <AvatarImage src={URL.createObjectURL(avatarFile)} alt={avatarFile.name} />
+                  <AvatarImage
+                    src={URL.createObjectURL(avatarFile)}
+                    alt={avatarFile.name}
+                  />
                   <AvatarFallback>?</AvatarFallback>
                 </Avatar>
               ) : (
                 <ImageUp className="text-muted-foreground size-5" />
               )}
               <span className="text-muted-foreground truncate text-xs">
-                {avatarFile ? avatarFile.name : "Optional — drop an image or click to choose"}
+                {avatarFile
+                  ? avatarFile.name
+                  : "Optional — drop an image or click to choose"}
               </span>
             </div>
           </div>
@@ -187,7 +199,12 @@ export function CreateGroupDialog({ open, onOpenChange }: CreateGroupDialogProps
             <Button type="submit" size="sm" disabled={create.isPending}>
               {create.isPending ? "Creating…" : "Create"}
             </Button>
-            <Button type="button" size="sm" variant="ghost" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
           </DialogFooter>

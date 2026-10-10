@@ -4,18 +4,14 @@ import { file } from "./api";
 import type { UploadedFile } from "./schemas";
 import type { HashRequest, HashResponse } from "@/workers/file-hash.worker";
 
-/** The backend rejects any chunk larger than 10 MiB. */
 const CHUNK_SIZE = 5 * 1024 * 1024;
-/** Matches the legacy client's ceiling; the chunked endpoints have no total cap. */
 const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024;
 const MAX_PARALLEL_CHUNKS = 3;
 const CHUNK_ATTEMPTS = 3;
 const RETRY_BASE_DELAY_MS = 1000;
-/** `/file/verify` validates ext_name against this, dot excluded. */
 const EXT_PATTERN = /^[a-zA-Z0-9]{1,10}$/;
 
 export interface UploadProgress {
-  /** Hashing a large file takes long enough that it needs its own bar. */
   phase: "hashing" | "uploading";
   completed: number;
   total: number;
@@ -26,16 +22,18 @@ function extNameOf(fileName: string): string {
   return EXT_PATTERN.test(ext) ? ext.toLowerCase() : "bin";
 }
 
-/** Runs the digest off the main thread; see the worker for why it is chunked. */
 function hashInWorker(
   source: File,
   onProgress?: (progress: UploadProgress) => void,
   signal?: AbortSignal,
 ): Promise<string> {
   return new Promise((resolve, reject) => {
-    const worker = new Worker(new URL("../workers/file-hash.worker.ts", import.meta.url), {
-      type: "module",
-    });
+    const worker = new Worker(
+      new URL("../workers/file-hash.worker.ts", import.meta.url),
+      {
+        type: "module",
+      },
+    );
 
     const finish = (settle: () => void) => {
       worker.terminate();
@@ -60,7 +58,8 @@ function hashInWorker(
         finish(() => reject(new Error(message.message)));
       }
     };
-    worker.onerror = () => finish(() => reject(new Error("failed to hash the file")));
+    worker.onerror = () =>
+      finish(() => reject(new Error("failed to hash the file")));
 
     signal?.addEventListener("abort", onAbort, { once: true });
     const request: HashRequest = { file: source, chunkSize: CHUNK_SIZE };
@@ -68,9 +67,9 @@ function hashInWorker(
   });
 }
 
-const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-/** Retries a chunk on transport hiccups, backing off between attempts. */
 async function withRetry(send: () => Promise<unknown>, signal?: AbortSignal) {
   for (let attempt = 1; ; attempt += 1) {
     try {
@@ -83,7 +82,6 @@ async function withRetry(send: () => Promise<unknown>, signal?: AbortSignal) {
   }
 }
 
-/** Hash-verify, upload only the chunks the server is still missing, then merge. */
 export async function uploadInChunks(
   source: File,
   onProgress?: (progress: UploadProgress) => void,

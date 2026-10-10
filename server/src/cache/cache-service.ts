@@ -1,15 +1,8 @@
 import { Redis } from "ioredis";
 import { env } from "../config/env.js";
 
-// Read-through cache mirroring the Go server's two groupcache groups
-// (user_info by uuid, session_list by owner uuid). Redis-backed in production,
-// in-memory in tests (REDIS_URL=""). Every method degrades to a miss on Redis
-// errors instead of rejecting — the DB remains the source of truth.
-
 export type CacheGroup = "user_info" | "session_list";
 
-// Shape cached under the user_info group — mirrors Go's model.UserInfo JSON
-// projection (password and deleted_at excluded).
 export interface CachedUser {
   uuid: string;
   nickname: string;
@@ -75,9 +68,7 @@ class RedisStore implements CacheStore {
         expire_at: Math.floor(Date.now() / 1000) + ttl,
       };
       await this.redis.hset(metaKey(group), key, JSON.stringify(meta));
-    } catch {
-      // Cache writes are best-effort.
-    }
+    } catch {}
   }
 
   async delete(group: CacheGroup, key: string) {
@@ -85,9 +76,7 @@ class RedisStore implements CacheStore {
       await this.redis.del(keyFor(group, key));
       await this.redis.srem(idxKey(group), key);
       await this.redis.hdel(metaKey(group), key);
-    } catch {
-      // Ignore.
-    }
+    } catch {}
   }
 
   async entries(group: CacheGroup) {
@@ -101,13 +90,9 @@ class RedisStore implements CacheStore {
         if (v === null) return;
         try {
           out.set(k, JSON.parse(v) as MetaEntry);
-        } catch {
-          // Skip malformed entries.
-        }
+        } catch {}
       });
-    } catch {
-      // Empty snapshot on Redis failure.
-    }
+    } catch {}
     return out;
   }
 
@@ -170,8 +155,6 @@ export class CacheService {
     this.store = env.REDIS_URL ? new RedisStore(env.REDIS_URL) : new MemoryStore();
   }
 
-  // ---- user_info group ----
-
   async getUser<T>(uuid: string): Promise<T | null> {
     const raw = await this.store.get("user_info", uuid);
     if (raw === null) return null;
@@ -190,8 +173,6 @@ export class CacheService {
     await this.store.delete("user_info", uuid);
   }
 
-  // ---- session_list group ----
-
   async getSessionList<T>(owner: string): Promise<T | null> {
     const raw = await this.store.get("session_list", owner);
     if (raw === null) return null;
@@ -209,8 +190,6 @@ export class CacheService {
   async deleteSessionList(owner: string) {
     await this.store.delete("session_list", owner);
   }
-
-  // ---- dashboard ----
 
   async snapshot() {
     const groups: {

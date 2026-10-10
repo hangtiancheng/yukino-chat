@@ -12,19 +12,14 @@ import {
 } from "@/service/agent-schemas";
 import useAuthStore from "./auth";
 
-/** Live progress for the Yukino thread. Prompts and finished replies travel the
- * chat socket; this store holds only what the transcript cannot: the streaming
- * bubble, thinking, tool cards and the prompts a run is waiting on. */
 export interface AgentState {
   status: AgentConnectionStatus;
-  /** False while the agent warms up; a prompt sent now queues until it is true. */
   ready: boolean;
   items: AgentItem[];
   commands: SlashCommand[];
   usage: { inputTokens: number; outputTokens: number } | null;
   streaming: boolean;
   model: string;
-  /** Chat message new items are placed after. */
   anchorId: string;
   currentStreamId: string | null;
   currentThinkingId: string | null;
@@ -53,13 +48,12 @@ function nextId(prefix: string): string {
   return `${prefix}_${itemCounter}`;
 }
 
-/** Sends one JSON-RPC 2.0 request. The server answers each with a result or
- * a protocol error; the store treats answers as fire-and-forget, so request
- * ids only exist to satisfy the protocol. */
 function send(request: AgentRequest) {
   if (socket?.readyState !== WebSocket.OPEN) return;
   requestCounter += 1;
-  socket.send(JSON.stringify({ jsonrpc: "2.0", id: requestCounter, ...request }));
+  socket.send(
+    JSON.stringify({ jsonrpc: "2.0", id: requestCounter, ...request }),
+  );
 }
 
 type Snapshot = Omit<
@@ -84,11 +78,17 @@ function withItem(state: Snapshot, item: AgentItem): Snapshot {
   return { ...state, items: [...state.items, item] };
 }
 
-function notice(state: Snapshot, tone: "info" | "error" | "done", content: string): Snapshot {
-  // A failing socket re-reports the same reason on every retry, so an
-  // identical repeat of the previous line is dropped instead of stacking up.
+function notice(
+  state: Snapshot,
+  tone: "info" | "error" | "done",
+  content: string,
+): Snapshot {
   const last = state.items.at(-1);
-  if (last?.kind === "notice" && last.tone === tone && last.content === content) {
+  if (
+    last?.kind === "notice" &&
+    last.tone === tone &&
+    last.content === content
+  ) {
     return state;
   }
   return withItem(state, {
@@ -107,14 +107,13 @@ function finalizeThinking(state: Snapshot): Snapshot {
     ...state,
     currentThinkingId: null,
     items: state.items.map((item) =>
-      item.kind === "thinking" && item.id === id ? { ...item, done: true } : item,
+      item.kind === "thinking" && item.id === id
+        ? { ...item, done: true }
+        : item,
     ),
   };
 }
 
-/** A run that ended can no longer accept answers — the server fails leftover
- * prompts (deny / empty answers), so their cards settle instead of staying
- * clickable forever. */
 function settlePrompts(state: Snapshot): Snapshot {
   return {
     ...state,
@@ -215,13 +214,9 @@ function apply(state: Snapshot, event: AgentNotification): Snapshot {
 
     case "agent/stream_end": {
       const { messageId, text } = event.params;
-      // The stored message takes over from here, so later items belong after
-      // it rather than after the prompt.
       const anchorId = messageId || state.anchorId;
       const id = state.currentStreamId;
       if (id === null) {
-        // Nothing was streamed into a bubble — only worth showing when the
-        // text never made it into the transcript.
         if (messageId) return { ...state, anchorId };
         return withItem(
           { ...state, anchorId },
@@ -251,12 +246,10 @@ function apply(state: Snapshot, event: AgentNotification): Snapshot {
       const next = finalizeThinking(state);
       const key = toolKey(event.params.toolName, event.params.toolId);
       const known = next.items.some(
-        (item) => item.kind === "tool" && toolKey(item.toolName, item.toolId) === key,
+        (item) =>
+          item.kind === "tool" && toolKey(item.toolName, item.toolId) === key,
       );
       if (known) {
-        // A call is announced twice: once when the model starts emitting it,
-        // and again once its arguments have been parsed. That second
-        // announcement is the only place the args ever arrive.
         if (!event.params.args) return next;
         return {
           ...next,
@@ -284,7 +277,10 @@ function apply(state: Snapshot, event: AgentNotification): Snapshot {
       const key = toolKey(event.params.toolName, event.params.toolId);
       let matched = false;
       const items = state.items.map((item) => {
-        if (item.kind !== "tool" || toolKey(item.toolName, item.toolId) !== key) {
+        if (
+          item.kind !== "tool" ||
+          toolKey(item.toolName, item.toolId) !== key
+        ) {
           return item;
         }
         matched = true;
@@ -344,7 +340,11 @@ function apply(state: Snapshot, event: AgentNotification): Snapshot {
       return notice(state, "info", event.params.message);
 
     case "agent/error":
-      return notice({ ...settlePrompts(state), streaming: false }, "error", event.params.message);
+      return notice(
+        { ...settlePrompts(state), streaming: false },
+        "error",
+        event.params.message,
+      );
 
     case "agent/compact":
       return notice(state, "info", `⟳ ${event.params.message}`);
@@ -363,8 +363,6 @@ function apply(state: Snapshot, event: AgentNotification): Snapshot {
       return { ...settlePrompts(state), streaming: false };
 
     default:
-      // agent/turn_complete, agent/thinking_complete and any method added
-      // server-side later: received, nothing to render.
       return state;
   }
 }
@@ -383,8 +381,6 @@ function handleFrame(raw: unknown) {
     id?: unknown;
     method?: unknown;
   };
-  // Only server-to-client notifications drive the timeline; responses to the
-  // store's own fire-and-forget requests (they carry an id) are ignored.
   if (frame.jsonrpc !== "2.0" || "id" in frame) return;
   if (typeof frame.method !== "string") return;
   useAgentStore.setState((state) => apply(state, payload as AgentNotification));
@@ -413,12 +409,12 @@ function openSocket() {
     socket.close();
   }
 
-  const next = new WebSocket(`${wsUrl}/agent/ws?token=${encodeURIComponent(token)}`);
+  const next = new WebSocket(
+    `${wsUrl}/agent/ws?token=${encodeURIComponent(token)}`,
+  );
   next.onopen = () => {
     reconnectDelay = INITIAL_RECONNECT_DELAY;
     useAgentStore.setState({ status: "connected" });
-    // The server answers the ping request; the round trip keeps proxies from
-    // idling the socket out during a long tool call.
     pingTimer = setInterval(() => send({ method: "ping" }), PING_INTERVAL);
   };
   next.onmessage = (event: MessageEvent) => handleFrame(event.data);
@@ -450,8 +446,6 @@ const useAgentStore = create<AgentState>(() => ({
     intentionalClose = false;
     reconnectDelay = INITIAL_RECONNECT_DELAY;
     clearTimers();
-    // Progress is only meaningful next to the transcript it belongs to, so a
-    // fresh visit starts from an empty overlay.
     useAgentStore.setState({ ...emptySnapshot, status: "connecting" });
     openSocket();
   },
@@ -471,7 +465,9 @@ const useAgentStore = create<AgentState>(() => ({
     send({ method: "permission/respond", params: { id, response } });
     useAgentStore.setState((state) => ({
       items: state.items.map((item) =>
-        item.kind === "permission" && item.id === id ? { ...item, response } : item,
+        item.kind === "permission" && item.id === id
+          ? { ...item, response }
+          : item,
       ),
     }));
   },
@@ -480,7 +476,9 @@ const useAgentStore = create<AgentState>(() => ({
     send({ method: "question/respond", params: { id, answers } });
     useAgentStore.setState((state) => ({
       items: state.items.map((item) =>
-        item.kind === "question" && item.id === id ? { ...item, answered: true } : item,
+        item.kind === "question" && item.id === id
+          ? { ...item, answered: true }
+          : item,
       ),
     }));
   },

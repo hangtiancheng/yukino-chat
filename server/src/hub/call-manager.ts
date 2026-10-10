@@ -1,5 +1,3 @@
-// Tracks active audio/video call rooms and per-user busy state. A 1v1 room id
-// is derived from the participant pair; a group call uses the group uuid.
 export class CallManager {
   private rooms = new Map<string, Set<string>>();
   private users = new Map<string, string>();
@@ -19,7 +17,6 @@ export class CallManager {
     return this.rooms.get(roomId)?.has(uuid) ?? false;
   }
 
-  // Adds the user to a room; fails when they are busy in a different room.
   join(roomId: string, uuid: string): boolean {
     const cur = this.users.get(uuid);
     if (cur !== undefined && cur !== roomId) return false;
@@ -33,8 +30,6 @@ export class CallManager {
     return true;
   }
 
-  // Removes the user from their room and returns [roomId, remaining members].
-  // Empty rooms are dissolved.
   leave(uuid: string): [string, string[]] {
     const roomId = this.users.get(uuid);
     if (roomId === undefined) return ["", []];

@@ -54,7 +54,6 @@ describe("interaction broker", () => {
   it("snapshots pending prompts for reconnect replay", async () => {
     const broker = new InteractionBroker();
     void broker.requestPermission({ id: "perm_4", toolName: "Bash", description: "x" });
-    // The runtime always awaits askUser; the catch mirrors cancellation here.
     const answers = broker
       .requestAnswers({
         id: "ask_2",

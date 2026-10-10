@@ -35,8 +35,12 @@ interface VirtualPickerProps {
   onToggle: (id: string) => void;
 }
 
-/** Member lists can run to hundreds of rows, so only the visible slice mounts. */
-function VirtualPicker({ rows, selected, emptyLabel, onToggle }: VirtualPickerProps) {
+function VirtualPicker({
+  rows,
+  selected,
+  emptyLabel,
+  onToggle,
+}: VirtualPickerProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
     count: rows.length,
@@ -46,12 +50,19 @@ function VirtualPicker({ rows, selected, emptyLabel, onToggle }: VirtualPickerPr
   });
 
   if (rows.length === 0) {
-    return <p className="text-muted-foreground py-6 text-center text-sm">{emptyLabel}</p>;
+    return (
+      <p className="text-muted-foreground py-6 text-center text-sm">
+        {emptyLabel}
+      </p>
+    );
   }
 
   return (
     <div ref={scrollRef} className="h-60 overflow-y-auto">
-      <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
+      <div
+        className="relative w-full"
+        style={{ height: virtualizer.getTotalSize() }}
+      >
         {virtualizer.getVirtualItems().map((item) => {
           const row = rows[item.index];
           const checked = selected.includes(row.id);
@@ -72,12 +83,19 @@ function VirtualPicker({ rows, selected, emptyLabel, onToggle }: VirtualPickerPr
                     {row.name.charAt(0).toUpperCase() || "?"}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-foreground truncate text-sm">{row.name}</span>
+                <span className="text-foreground truncate text-sm">
+                  {row.name}
+                </span>
                 {row.note && (
-                  <span className="text-muted-foreground shrink-0 text-xs">{row.note}</span>
+                  <span className="text-muted-foreground shrink-0 text-xs">
+                    {row.note}
+                  </span>
                 )}
               </div>
-              <Checkbox checked={checked} onCheckedChange={() => onToggle(row.id)} />
+              <Checkbox
+                checked={checked}
+                onCheckedChange={() => onToggle(row.id)}
+              />
             </div>
           );
         })}
@@ -159,22 +177,32 @@ export function GroupMembersDialog({
         {canManage ? (
           <Tabs defaultValue="members">
             <TabsList>
-              <TabsTrigger value="members">Members ({memberRows.length})</TabsTrigger>
-              <TabsTrigger value="invite">Invite ({inviteRows.length})</TabsTrigger>
+              <TabsTrigger value="members">
+                Members ({memberRows.length})
+              </TabsTrigger>
+              <TabsTrigger value="invite">
+                Invite ({inviteRows.length})
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="members">
               <VirtualPicker
                 rows={memberRows}
                 selected={selectedMembers}
-                emptyLabel={members.isPending ? "Loading members…" : "No members found"}
-                onToggle={(id) => setSelectedMembers((previous) => xor(previous, [id]))}
+                emptyLabel={
+                  members.isPending ? "Loading members…" : "No members found"
+                }
+                onToggle={(id) =>
+                  setSelectedMembers((previous) => xor(previous, [id]))
+                }
               />
               <Button
                 variant="destructive"
                 size="sm"
                 className="mt-3"
-                disabled={selectedMembers.length === 0 || removeMembers.isPending}
+                disabled={
+                  selectedMembers.length === 0 || removeMembers.isPending
+                }
                 onClick={() => removeMembers.mutate()}
               >
                 Remove selected ({selectedMembers.length})
@@ -186,14 +214,20 @@ export function GroupMembersDialog({
                 rows={inviteRows}
                 selected={selectedInvitees}
                 emptyLabel={
-                  friends.isPending ? "Loading contacts…" : "Every contact is already a member"
+                  friends.isPending
+                    ? "Loading contacts…"
+                    : "Every contact is already a member"
                 }
-                onToggle={(id) => setSelectedInvitees((previous) => xor(previous, [id]))}
+                onToggle={(id) =>
+                  setSelectedInvitees((previous) => xor(previous, [id]))
+                }
               />
               <Button
                 size="sm"
                 className="mt-3"
-                disabled={selectedInvitees.length === 0 || inviteMembers.isPending}
+                disabled={
+                  selectedInvitees.length === 0 || inviteMembers.isPending
+                }
                 onClick={() => inviteMembers.mutate()}
               >
                 Invite selected ({selectedInvitees.length})
@@ -204,7 +238,9 @@ export function GroupMembersDialog({
           <VirtualPicker
             rows={memberRows}
             selected={[]}
-            emptyLabel={members.isPending ? "Loading members…" : "No members found"}
+            emptyLabel={
+              members.isPending ? "Loading members…" : "No members found"
+            }
             onToggle={() => undefined}
           />
         )}

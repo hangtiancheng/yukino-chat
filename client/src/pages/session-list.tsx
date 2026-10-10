@@ -10,8 +10,12 @@ export default function SessionList() {
       </div>
       <div className="text-muted-foreground/50 flex flex-1 flex-col items-center justify-center">
         <MessageSquare size={64} strokeWidth={1.5} className="mb-4" />
-        <p className="text-muted-foreground/70">Select a conversation to start chatting</p>
-        <p className="text-muted-foreground/50 mt-2 text-xs">Press ⌘K to jump to anyone</p>
+        <p className="text-muted-foreground/70">
+          Select a conversation to start chatting
+        </p>
+        <p className="text-muted-foreground/50 mt-2 text-xs">
+          Press ⌘K to jump to anyone
+        </p>
       </div>
     </>
   );

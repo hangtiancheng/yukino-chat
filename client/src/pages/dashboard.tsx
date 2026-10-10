@@ -17,13 +17,14 @@ import {
 import { wsUrl } from "@/env";
 import { useWindowedRows } from "@/lib/use-windowed-rows";
 import useAuthStore from "@/store/auth";
-import useDashboardStore, { type DashboardStatus, type GroupSnapshot } from "@/store/dashboard";
+import useDashboardStore, {
+  type DashboardStatus,
+  type GroupSnapshot,
+} from "@/store/dashboard";
 import { formatExpire, formatSize } from "@/utils/format";
 
 const ROW_HEIGHT = 36;
 
-// The dashboard websocket requires an admin token; browsers cannot set
-// headers during a handshake, so it rides in the query string.
 function dashboardWsUrl(): string {
   const token = useAuthStore.getState().token ?? "";
   return `${wsUrl}/dashboard/ws?token=${encodeURIComponent(token)}`;
@@ -64,9 +65,13 @@ function StatusBadge({ status }: { status: DashboardStatus }) {
     <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
       <motion.span
         className={`size-2 rounded-full ${STATUS_STYLE[status]}`}
-        animate={status === "connecting" ? { opacity: [1, 0.3, 1] } : { opacity: 1 }}
+        animate={
+          status === "connecting" ? { opacity: [1, 0.3, 1] } : { opacity: 1 }
+        }
         transition={
-          status === "connecting" ? { duration: 1.2, repeat: Infinity } : { duration: 0.2 }
+          status === "connecting"
+            ? { duration: 1.2, repeat: Infinity }
+            : { duration: 0.2 }
         }
       />
       {status}
@@ -76,7 +81,6 @@ function StatusBadge({ status }: { status: DashboardStatus }) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  // Selector subscriptions replace the old 500 ms poll of the store snapshot.
   const groups = useDashboardStore((state) => state.groups);
   const status = useDashboardStore((state) => state.status);
 
@@ -87,7 +91,10 @@ export default function Dashboard() {
   }, []);
 
   const rows = useMemo(() => flatten(groups), [groups]);
-  const { scrollRef, items, paddingTop, paddingBottom } = useWindowedRows(rows.length, ROW_HEIGHT);
+  const { scrollRef, items, paddingTop, paddingBottom } = useWindowedRows(
+    rows.length,
+    ROW_HEIGHT,
+  );
 
   return (
     <div className="bg-background flex min-h-screen flex-col gap-3 p-6">
@@ -95,7 +102,8 @@ export default function Dashboard() {
         <div className="flex items-baseline gap-3">
           <h1 className="text-lg font-semibold">Cache Dashboard</h1>
           <span className="text-muted-foreground text-xs tabular-nums">
-            <NumberFlow value={rows.length} /> entries across {groups.length} groups
+            <NumberFlow value={rows.length} /> entries across {groups.length}{" "}
+            groups
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -103,11 +111,17 @@ export default function Dashboard() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => useDashboardStore.getState().connect(dashboardWsUrl())}
+            onClick={() =>
+              useDashboardStore.getState().connect(dashboardWsUrl())
+            }
           >
             Reconnect
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => navigate("/manager")}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/manager")}
+          >
             Back
           </Button>
         </div>
@@ -142,7 +156,9 @@ export default function Dashboard() {
                     <Badge variant="secondary">{row.group}</Badge>
                   </TableCell>
                   <TableCell className="font-mono text-xs">{row.key}</TableCell>
-                  <TableCell className="tabular-nums">{formatSize(row.size)}</TableCell>
+                  <TableCell className="tabular-nums">
+                    {formatSize(row.size)}
+                  </TableCell>
                   <TableCell className="tabular-nums">{row.level}</TableCell>
                   <TableCell className="text-muted-foreground text-xs">
                     {formatExpire(row.expire_at)}
@@ -153,7 +169,11 @@ export default function Dashboard() {
                       size="icon"
                       aria-label={`Delete ${row.key}`}
                       className="text-destructive size-7"
-                      onClick={() => useDashboardStore.getState().deleteKey(row.group, row.key)}
+                      onClick={() =>
+                        useDashboardStore
+                          .getState()
+                          .deleteKey(row.group, row.key)
+                      }
                     >
                       <Trash2 className="size-3.5" />
                     </Button>

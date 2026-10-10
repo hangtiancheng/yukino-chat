@@ -1,8 +1,5 @@
 import type { Context } from "hono";
 
-// Every response is HTTP 200; the real status lives in the body. `data` is
-// only present on code 200: pass `undefined` to omit it, `null` to emit
-// "data": null (Go emits null for empty-but-typed lists).
 export const ok = (c: Context, message: string, data?: unknown) =>
   data === undefined ? c.json({ code: 200, message }) : c.json({ code: 200, message, data });
 
@@ -18,8 +15,6 @@ export const forbidden = (c: Context, message: string) => c.json({ code: 403, me
 export const rateLimited = (c: Context) =>
   c.json({ code: 429, message: "too many requests, slow down" });
 
-// Result triple mirroring the Go (message, data, ret) convention. Services
-// without a data payload return the 2-tuple (message, ret).
 export type Ret<T> = [string, T, number];
 export type RetVoid = [string, number];
 
@@ -36,8 +31,6 @@ export function back(c: Context, result: [string, unknown, number] | [string, nu
 
 function finish(c: Context, message: string, data: unknown, ret: number) {
   if (ret === RET_OK) {
-    // Go builds lists by appending to a nil slice: an empty result serializes
-    // as "data": null, never [].
     const normalized = Array.isArray(data) && data.length === 0 ? null : data;
     return ok(c, message, normalized);
   }

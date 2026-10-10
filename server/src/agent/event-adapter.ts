@@ -6,17 +6,12 @@ export type AdapterAction =
   | { kind: "notify"; method: string; params: Record<string, unknown> }
   | { kind: "flush" };
 
-// Stateful per-turn translator from library AgentEvents to JSON-RPC
-// notifications, mirroring the Go bridge's consumeAgentEvents semantics:
-// streaming deltas stay ephemeral, completed text blocks flush into one
-// persisted chat message each.
 export class EventAdapter {
   private streamText = "";
   turns = 0;
   completed = false;
   cancelRequested = false;
 
-  // Turn clock, provided by the runtime (elapsed seconds for loop_complete).
   private readonly elapsedSeconds: () => number;
 
   constructor(elapsedSeconds: () => number) {
@@ -45,7 +40,6 @@ export class EventAdapter {
           },
         ];
       case "tool_use":
-        // A finished text block precedes every tool call.
         return [
           { kind: "flush" },
           {
@@ -102,7 +96,6 @@ export class EventAdapter {
           },
         ];
       case "error":
-        // Cancellation surfaces as an error event; swallow it (Go parity).
         if (this.cancelRequested) return [];
         return [
           { kind: "notify", method: "agent/error", params: { message: event.error.message } },
@@ -118,7 +111,6 @@ export class EventAdapter {
           },
         ];
       case "permission_request":
-        // Permissions flow through the onPermissionRequest callback instead.
         return [];
       default:
         return [];

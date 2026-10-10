@@ -23,7 +23,6 @@ function formatDuration(totalSeconds: number): string {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
-/** Ticks a clock rather than the elapsed count, so no state is set on mount. */
 function useElapsedSeconds(since: number | null): number {
   const [now, setNow] = useState(() => Date.now());
 
@@ -59,7 +58,13 @@ function VideoTile({
 
   return (
     <div className="bg-muted relative aspect-video overflow-hidden rounded-lg">
-      <video ref={ref} autoPlay playsInline muted={muted} className="size-full object-cover" />
+      <video
+        ref={ref}
+        autoPlay
+        playsInline
+        muted={muted}
+        className="size-full object-cover"
+      />
       <span className="absolute bottom-1 left-2 truncate text-[10px] font-medium text-white drop-shadow">
         {label}
       </span>
@@ -67,7 +72,6 @@ function VideoTile({
   );
 }
 
-/** Remote audio needs an element of its own to actually play. */
 function AudioTile({ peer, muted }: { peer: CallPeer; muted: boolean }) {
   const ref = useRef<HTMLAudioElement | null>(null);
 
@@ -97,7 +101,6 @@ export function CallDialog() {
   const [mutedPeers, setMutedPeers] = useState<ReadonlySet<string>>(new Set());
   const elapsed = useElapsedSeconds(connectedAt);
 
-  // Who is already talking, so a group invite can be judged before joining.
   const callers = useQuery({
     ...callersQuery(roomId, userId),
     enabled: Boolean(roomId && userId) && kind === "group",
@@ -131,7 +134,8 @@ export function CallDialog() {
         <DialogHeader>
           <DialogTitle>{heading}</DialogTitle>
           <DialogDescription>
-            {kind === "group" ? "Group" : "One-to-one"} {mediaLabel.toLowerCase()} call
+            {kind === "group" ? "Group" : "One-to-one"}{" "}
+            {mediaLabel.toLowerCase()} call
             {title ? ` with ${title}` : ""}
           </DialogDescription>
         </DialogHeader>
@@ -152,7 +156,12 @@ export function CallDialog() {
             )}
           </div>
         ) : media === "video" ? (
-          <div className={cn("grid gap-2", peers.length > 1 ? "grid-cols-3" : "grid-cols-2")}>
+          <div
+            className={cn(
+              "grid gap-2",
+              peers.length > 1 ? "grid-cols-3" : "grid-cols-2",
+            )}
+          >
             {peers.map((peer) => (
               <VideoTile
                 key={peer.id}
@@ -174,13 +183,19 @@ export function CallDialog() {
               <div key={peer.id} className="flex flex-col items-center gap-1.5">
                 <AudioTile peer={peer} muted={mutedPeers.has(peer.id)} />
                 <Avatar className="size-14">
-                  <AvatarFallback>{peer.name.charAt(0).toUpperCase() || "?"}</AvatarFallback>
+                  <AvatarFallback>
+                    {peer.name.charAt(0).toUpperCase() || "?"}
+                  </AvatarFallback>
                 </Avatar>
-                <span className="text-muted-foreground max-w-24 truncate text-xs">{peer.name}</span>
+                <span className="text-muted-foreground max-w-24 truncate text-xs">
+                  {peer.name}
+                </span>
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label={mutedPeers.has(peer.id) ? "Unmute peer" : "Mute peer"}
+                  aria-label={
+                    mutedPeers.has(peer.id) ? "Unmute peer" : "Mute peer"
+                  }
                   onClick={() => toggleMuted(peer.id)}
                 >
                   {mutedPeers.has(peer.id) ? (
@@ -192,7 +207,9 @@ export function CallDialog() {
               </div>
             ))}
             {peers.length === 0 && (
-              <p className="text-muted-foreground text-xs">Waiting for someone to join…</p>
+              <p className="text-muted-foreground text-xs">
+                Waiting for someone to join…
+              </p>
             )}
           </div>
         )}
@@ -215,9 +232,15 @@ export function CallDialog() {
                 size="sm"
                 variant="outline"
                 onClick={toggleMicrophone}
-                aria-label={microphoneOn ? "Mute microphone" : "Unmute microphone"}
+                aria-label={
+                  microphoneOn ? "Mute microphone" : "Unmute microphone"
+                }
               >
-                {microphoneOn ? <Mic className="size-3.5" /> : <MicOff className="size-3.5" />}
+                {microphoneOn ? (
+                  <Mic className="size-3.5" />
+                ) : (
+                  <MicOff className="size-3.5" />
+                )}
                 {microphoneOn ? "Mute" : "Unmute"}
               </Button>
               <Button size="sm" variant="destructive" onClick={hangUp}>

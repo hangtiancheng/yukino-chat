@@ -30,7 +30,8 @@ const useAuthStore = create<AuthState>()(
     (set) => ({
       token: "",
       userInfo: emptyUser,
-      setAuth: (result) => set({ token: result.token, userInfo: result.user_info }),
+      setAuth: (result) =>
+        set({ token: result.token, userInfo: result.user_info }),
       setUserInfo: (userInfo) => set({ userInfo }),
       clearAuth: () => set({ token: "", userInfo: emptyUser }),
     }),
@@ -42,7 +43,8 @@ const useAuthStore = create<AuthState>()(
   ),
 );
 
-export const selectIsLoggedIn = (state: AuthState) => Boolean(state.token && state.userInfo.uuid);
+export const selectIsLoggedIn = (state: AuthState) =>
+  Boolean(state.token && state.userInfo.uuid);
 
 export const isAuthenticated = () => selectIsLoggedIn(useAuthStore.getState());
 

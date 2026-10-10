@@ -11,7 +11,6 @@ export interface CallPeer {
   stream: MediaStream;
 }
 
-/** Everything needed to answer a call, captured from the inviting frame. */
 export interface IncomingCall {
   from: string;
   name: string;
@@ -19,34 +18,25 @@ export interface IncomingCall {
   media: CallMedia;
   kind: CallKind;
   roomId: string;
-  /** Where replies are addressed: the peer for 1v1, the group otherwise. */
   conversationId: string;
 }
 
 export type SignalOutcome =
-  { kind: "incoming"; call: IncomingCall } | { kind: "cancelled"; from: string } | undefined;
+  | { kind: "incoming"; call: IncomingCall }
+  | { kind: "cancelled"; from: string }
+  | undefined;
 
 interface PeerLink {
   pc: RTCPeerConnection;
   stream: MediaStream;
-  /** Candidates that raced ahead of the remote description. */
   queued: RTCIceCandidateInit[];
 }
 
-/** Mirrors CallRoomId in the Go call manager so both ends agree on the key. */
 export function callRoomId(selfId: string, conversationId: string): string {
   if (isGroupId(conversationId)) return conversationId;
   return `P:${[selfId, conversationId].sort().join(":")}`;
 }
 
-/**
- * Signalling rides on ordinary chat frames with `type: 3`.
- *
- * Room-level frames (start/join/leave/reject) are addressed to the
- * conversation, but `sdp` and `candidate` are addressed to a single peer: the
- * server relays those verbatim to whoever `receive_id` names, so sending them
- * to a group id would leak one peer's offer to every member.
- */
 export class CallManager {
   onLocalStream: ((stream: MediaStream | null) => void) | null = null;
   onPeers: ((peers: CallPeer[]) => void) | null = null;
@@ -59,7 +49,6 @@ export class CallManager {
   private sessionId = "";
   private localStream: MediaStream | null = null;
   private links = new Map<string, PeerLink>();
-  /** Nicknames harvested from signalling frames, for labelling tiles. */
   private names = new Map<string, string>();
   private engaged = false;
 
@@ -67,14 +56,20 @@ export class CallManager {
     return this.engaged;
   }
 
-  /** Ring a contact, or every available member of a group. */
-  async dial(options: { conversationId: string; sessionId: string; media: CallMedia }) {
+  async dial(options: {
+    conversationId: string;
+    sessionId: string;
+    media: CallMedia;
+  }) {
     this.adopt({
       conversationId: options.conversationId,
       sessionId: options.sessionId,
       media: options.media,
       kind: isGroupId(options.conversationId) ? "group" : "direct",
-      roomId: callRoomId(useAuthStore.getState().userInfo.uuid, options.conversationId),
+      roomId: callRoomId(
+        useAuthStore.getState().userInfo.uuid,
+        options.conversationId,
+      ),
     });
     await this.openLocalStream();
     this.signal("start_call", { media: this.media });
@@ -83,14 +78,11 @@ export class CallManager {
   async accept(call: IncomingCall) {
     this.adopt({ ...call, sessionId: "" });
     await this.openLocalStream();
-    // A group newcomer waits to be offered to; a 1v1 callee makes the caller
-    // offer. Either way the offering side is unambiguous, so no glare.
     this.signal(this.kind === "group" ? "join_call" : "receive_call");
   }
 
   decline(call: IncomingCall) {
     this.adopt({ ...call, sessionId: "" });
-    // Declining a group invite is local: the room keeps running without us.
     if (this.kind === "direct") this.signal("reject_call");
     this.end();
   }
@@ -100,7 +92,6 @@ export class CallManager {
     this.end();
   }
 
-  /** Returns whether the microphone is live after the toggle. */
   toggleMicrophone(): boolean {
     const tracks = this.localStream?.getAudioTracks() ?? [];
     const enabled = !tracks.some((track) => track.enabled);
@@ -108,7 +99,6 @@ export class CallManager {
     return enabled;
   }
 
-  /** Feed every `type: 3` frame here. */
   handleSignal(frame: Message): SignalOutcome {
     const av = parseAvData(frame.av_data);
     if (!av) return undefined;
@@ -124,7 +114,6 @@ export class CallManager {
 
     if (!this.engaged) return undefined;
     const roomId = (av.room_id as string) || "";
-    // Late frames from a previous conversation must not touch this call.
     if (roomId && this.roomId && roomId !== this.roomId) return undefined;
 
     switch (type) {
@@ -170,9 +159,10 @@ export class CallManager {
     this.engaged = true;
   }
 
-  private describeIncoming(frame: Message, av: Record<string, unknown>): SignalOutcome {
-    // The server refuses to invite a busy user, so an invite arriving mid-call
-    // belongs to a room we are not part of.
+  private describeIncoming(
+    frame: Message,
+    av: Record<string, unknown>,
+  ): SignalOutcome {
     if (this.engaged) return undefined;
     const kind: CallKind = isGroupId(frame.receive_id) ? "group" : "direct";
     const conversationId = kind === "group" ? frame.receive_id : frame.send_id;
@@ -192,7 +182,6 @@ export class CallManager {
     };
   }
 
-  /** A peer hung up: drop it mid-call, or cancel the ringing UI. */
   private peerLeft(peerId: string): SignalOutcome {
     if (!this.engaged) return { kind: "cancelled", from: peerId };
     this.dropPeer(peerId);
@@ -267,7 +256,6 @@ export class CallManager {
 
   private async addCandidate(peerId: string, candidate: RTCIceCandidateInit) {
     const link = this.ensureLink(peerId);
-    // addIceCandidate throws until a remote description exists.
     if (!link.pc.remoteDescription) {
       link.queued.push(candidate);
       return;
@@ -288,7 +276,6 @@ export class CallManager {
     link.pc.close();
     this.links.delete(peerId);
     this.publishPeers();
-    // A 1v1 call is over once its only peer is gone; a group call continues.
     if (this.kind === "direct") this.end();
   }
 

@@ -54,7 +54,9 @@ export default function Register() {
     <AuthLayout>
       <Card className="shadow-primary/5 shadow-xl">
         <CardHeader>
-          <CardTitle className="text-2xl font-semibold tracking-tight">Create Account</CardTitle>
+          <CardTitle className="text-2xl font-semibold tracking-tight">
+            Create Account
+          </CardTitle>
           <CardDescription>Join Yukino Chat in a few seconds</CardDescription>
         </CardHeader>
         <form
@@ -85,7 +87,11 @@ export default function Register() {
 
             <form.Field name="telephone">
               {(field) => (
-                <FormField label="Phone" htmlFor="register-phone" errors={field.state.meta.errors}>
+                <FormField
+                  label="Phone"
+                  htmlFor="register-phone"
+                  errors={field.state.meta.errors}
+                >
                   <Input
                     id="register-phone"
                     inputMode="numeric"
@@ -141,7 +147,11 @@ export default function Register() {
           </CardContent>
 
           <CardFooter className="mt-4 flex-col gap-3">
-            <Button type="submit" className="w-full" disabled={signUp.isPending}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={signUp.isPending}
+            >
               {signUp.isPending ? "Creating account…" : "Create Account"}
             </Button>
             <div className="flex w-full justify-end">

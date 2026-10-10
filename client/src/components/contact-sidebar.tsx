@@ -12,7 +12,11 @@ import { ContactSettingsDialog } from "@/components/contact-settings-dialog";
 import { CreateGroupDialog } from "@/components/create-group-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,7 +68,9 @@ function Section({ title, count, open, onOpenChange, children }: SectionProps) {
           )}
         />
       </CollapsibleTrigger>
-      <CollapsibleContent className="overflow-hidden">{children}</CollapsibleContent>
+      <CollapsibleContent className="overflow-hidden">
+        {children}
+      </CollapsibleContent>
     </Collapsible>
   );
 }
@@ -164,19 +170,24 @@ export function ContactSidebar() {
 
   const unblock = useMutation({
     mutationFn: (contactId: string) => contact.unblock(userId, contactId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.contacts.all }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: keys.contacts.all }),
   });
 
-  const tagNames = new Map((tags.data ?? []).map((tag) => [tag.tag_id, tag.name]));
+  const tagNames = new Map(
+    (tags.data ?? []).map((tag) => [tag.tag_id, tag.name]),
+  );
   const friendSections = sortBy(
-    Object.entries(groupBy(friends.data ?? [], (friend) => friend.tag_id || "")).map(
-      ([tagId, rows]) => ({
-        label: tagId ? (tagNames.get(tagId) ?? "Tagged") : UNGROUPED,
-        rows,
-      }),
-    ),
-    // Ungrouped contacts sink to the bottom of the list.
-    [(section) => (section.label === UNGROUPED ? 1 : 0), (section) => section.label],
+    Object.entries(
+      groupBy(friends.data ?? [], (friend) => friend.tag_id || ""),
+    ).map(([tagId, rows]) => ({
+      label: tagId ? (tagNames.get(tagId) ?? "Tagged") : UNGROUPED,
+      rows,
+    })),
+    [
+      (section) => (section.label === UNGROUPED ? 1 : 0),
+      (section) => section.label,
+    ],
   );
 
   return (
@@ -203,13 +214,22 @@ export function ContactSidebar() {
             <Plus className="size-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44">
-            <DropdownMenuItem className="text-sm" onClick={() => setAddOpen(true)}>
+            <DropdownMenuItem
+              className="text-sm"
+              onClick={() => setAddOpen(true)}
+            >
               Add Contact / Group
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-sm" onClick={() => setCreateOpen(true)}>
+            <DropdownMenuItem
+              className="text-sm"
+              onClick={() => setCreateOpen(true)}
+            >
               Create Group
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-sm" onClick={() => setRequestsOpen(true)}>
+            <DropdownMenuItem
+              className="text-sm"
+              onClick={() => setRequestsOpen(true)}
+            >
               Friend Requests
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -231,7 +251,9 @@ export function ContactSidebar() {
                   name={result.nickname || result.uuid}
                   avatar={result.avatar}
                   onClick={() =>
-                    result.is_friend ? openChat.mutate(result.uuid) : setAddOpen(true)
+                    result.is_friend
+                      ? openChat.mutate(result.uuid)
+                      : setAddOpen(true)
                   }
                   trailing={
                     <span className="text-muted-foreground shrink-0 text-[10px]">
@@ -246,7 +268,9 @@ export function ContactSidebar() {
                   name={result.name || result.group_id}
                   avatar={result.avatar}
                   onClick={() =>
-                    result.is_joined ? openChat.mutate(result.group_id) : setAddOpen(true)
+                    result.is_joined
+                      ? openChat.mutate(result.group_id)
+                      : setAddOpen(true)
                   }
                   trailing={
                     <span className="text-muted-foreground shrink-0 text-[10px]">
@@ -270,7 +294,9 @@ export function ContactSidebar() {
                   Loading contacts…
                 </p>
               ) : friendSections.length === 0 ? (
-                <p className="text-muted-foreground px-3 py-3 text-xs">No contacts yet</p>
+                <p className="text-muted-foreground px-3 py-3 text-xs">
+                  No contacts yet
+                </p>
               ) : (
                 friendSections.map((group) => (
                   <div key={group.label}>
@@ -312,7 +338,10 @@ export function ContactSidebar() {
                                 >
                                   <MoreHorizontal className="size-3.5" />
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-40">
+                                <DropdownMenuContent
+                                  align="end"
+                                  className="w-40"
+                                >
                                   <DropdownMenuItem
                                     className="text-sm"
                                     onClick={() => setEditing(friend)}

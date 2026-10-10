@@ -5,8 +5,17 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build:client": "pnpm -C client build",
+    "build:server": "pnpm -C server build",
+    "build": "run-p build:*",
+    "format:client": "pnpm -C client format",
+    "format:server": "pnpm -C server format",
+    "format": "run-p format:*",
     "git:config": "git config user.name hangtiancheng && git config user.email '161043261@qq.com'",
     "git:commit": "git add -A && git commit -m \"feat: Introduce new features\"",
     "git:push": "pnpm git:commit && git push origin main"
+  },
+  "devDependencies": {
+    "npm-run-all2": "^9.0.3"
   }
 }

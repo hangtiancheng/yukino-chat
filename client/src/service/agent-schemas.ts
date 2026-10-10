@@ -1,24 +1,6 @@
-/**
- * Wire shapes for the Yukino control socket, plus the timeline model built from
- * them.
- *
- * The socket speaks JSON-RPC 2.0: agent progress arrives as server-to-client
- * notifications (no id), and the client's control messages are requests (with
- * an id) that the server answers with a result or a protocol error.
- *
- * The assistant's finished text arrives as ordinary chat messages, so this
- * socket only carries what a transcript cannot hold: token deltas, thinking,
- * tool calls and the prompts a run blocks on. Each of those is anchored to the
- * chat message it followed, which is what lets tool cards sit between two
- * replies instead of piling up at the end.
- */
-
-/* Server → client */
-
 export interface AgentConnected {
   model: string;
   streaming: boolean;
-  /** False while the agent is still warming up: MCP servers, tools, context. */
   ready: boolean;
   anchorId: string;
   inputTokens: number;
@@ -31,7 +13,6 @@ export interface SlashCommand {
   description: string;
 }
 
-/** Tool arguments are opaque agent JSON; only a few known keys are previewed. */
 export type ToolArgs = Record<string, unknown> | null;
 
 export interface QuestionOption {
@@ -46,8 +27,6 @@ export interface Question {
   multiSelect: boolean;
 }
 
-/** One server-to-client JSON-RPC notification. Members without a declared
- * `params` arrive without the member; unknown methods are ignored. */
 export type AgentNotification =
   | { method: "session/connected"; params: AgentConnected }
   | { method: "session/ready" }
@@ -98,12 +77,8 @@ export type AgentNotification =
     }
   | { method: "question/ask"; params: { id: string; questions: Question[] } };
 
-/* Client → server */
-
 export type PermissionResponse = "allow" | "deny" | "allowAlways";
 
-/** One client-to-server JSON-RPC request; the store adds `jsonrpc` and a
- * numeric `id` when sending and treats the answer as fire-and-forget. */
 export type AgentRequest =
   | {
       method: "permission/respond";
@@ -116,14 +91,11 @@ export type AgentRequest =
   | { method: "session/cancel" }
   | { method: "ping" };
 
-/* Timeline model */
-
-export type AgentConnectionStatus = "idle" | "connecting" | "connected" | "reconnecting";
+export type AgentConnectionStatus =
+  "idle" | "connecting" | "connected" | "reconnecting";
 
 export type ToolStatus = "running" | "ok" | "error";
 
-/** Every item remembers the chat message it came after, so the transcript and
- * this overlay stay interleaved in the order things actually happened. */
 interface Anchored {
   id: string;
   anchorId: string;
@@ -133,7 +105,6 @@ export interface AgentStreamItem extends Anchored {
   kind: "stream";
   content: string;
   streaming: boolean;
-  /** Once set, the chat message with this uuid replaces the live bubble. */
   messageId: string;
 }
 
@@ -180,5 +151,5 @@ export type AgentItem =
   | AgentQuestionItem
   | AgentNoticeItem;
 
-/** tool_use and tool_result are matched on this pair, not on arrival order. */
-export const toolKey = (toolName: string, toolId: string) => `${toolName}_${toolId}`;
+export const toolKey = (toolName: string, toolId: string) =>
+  `${toolName}_${toolId}`;

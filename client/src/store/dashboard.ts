@@ -68,7 +68,10 @@ const useDashboardStore = create<DashboardState>(() => ({
       socket = null;
       useDashboardStore.setState({ status: "disconnected" });
       if (!intentionalClose) {
-        retryTimer = setTimeout(() => useDashboardStore.getState().connect(url), RETRY_DELAY_MS);
+        retryTimer = setTimeout(
+          () => useDashboardStore.getState().connect(url),
+          RETRY_DELAY_MS,
+        );
       }
     };
     next.onerror = () => next.close();

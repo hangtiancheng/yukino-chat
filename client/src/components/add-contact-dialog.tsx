@@ -25,11 +25,14 @@ const DIRECT_JOIN = 0;
 interface AddContactDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Prefilled when the dialog is opened from a search result. */
   initialId?: string;
 }
 
-export function AddContactDialog({ open, onOpenChange, initialId = "" }: AddContactDialogProps) {
+export function AddContactDialog({
+  open,
+  onOpenChange,
+  initialId = "",
+}: AddContactDialogProps) {
   const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.userInfo.uuid);
   const [targetId, setTargetId] = useState(initialId);
@@ -47,7 +50,6 @@ export function AddContactDialog({ open, onOpenChange, initialId = "" }: AddCont
         });
         return "Application sent";
       }
-      // An open group lets anyone in without the owner approving.
       if ((await group.addMode(id)) === DIRECT_JOIN) {
         await group.enterDirectly(userId, id);
         return "Joined group";

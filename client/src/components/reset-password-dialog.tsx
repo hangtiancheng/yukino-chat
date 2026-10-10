@@ -21,9 +21,10 @@ interface ResetPasswordDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-/** `/user/update-password` is public and keyed on the phone number, so this
- * doubles as both "forgot password" and "change password". */
-export function ResetPasswordDialog({ open, onOpenChange }: ResetPasswordDialogProps) {
+export function ResetPasswordDialog({
+  open,
+  onOpenChange,
+}: ResetPasswordDialogProps) {
   const reset = useMutation({
     mutationFn: (values: z.infer<typeof resetPasswordSchema>) =>
       auth.updatePassword({
@@ -65,7 +66,11 @@ export function ResetPasswordDialog({ open, onOpenChange }: ResetPasswordDialogP
         >
           <form.Field name="telephone">
             {(field) => (
-              <FormField label="Phone" htmlFor="reset-phone" errors={field.state.meta.errors}>
+              <FormField
+                label="Phone"
+                htmlFor="reset-phone"
+                errors={field.state.meta.errors}
+              >
                 <Input
                   id="reset-phone"
                   inputMode="numeric"
@@ -123,7 +128,12 @@ export function ResetPasswordDialog({ open, onOpenChange }: ResetPasswordDialogP
             <Button type="submit" size="sm" disabled={reset.isPending}>
               {reset.isPending ? "Saving…" : "Save"}
             </Button>
-            <Button type="button" size="sm" variant="ghost" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
           </DialogFooter>

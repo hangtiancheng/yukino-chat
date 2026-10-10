@@ -7,9 +7,6 @@ datasource db {
   provider = "postgresql"
 }
 
-// Chat domain status/type columns are plain Ints: the wire sends raw ints and
-// the Go semantics (e.g. contact statuses 0-7) are load-bearing. PG enums are
-// only used for agent-internal state.
 
 model UserInfo {
   id            Int       @id @default(autoincrement())

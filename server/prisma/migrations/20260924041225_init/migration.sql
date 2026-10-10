@@ -1,13 +1,9 @@
--- CreateEnum
 CREATE TYPE "AgentSessionStatus" AS ENUM ('IDLE', 'RUNNING', 'WAITING', 'COMPLETED', 'ABORTED', 'FAILED');
 
--- CreateEnum
 CREATE TYPE "AgentInteractionType" AS ENUM ('PERMISSION', 'QUESTION');
 
--- CreateEnum
 CREATE TYPE "AgentInteractionStatus" AS ENUM ('PENDING', 'ANSWERED', 'REJECTED', 'EXPIRED', 'CANCELLED');
 
--- CreateTable
 CREATE TABLE "user_info" (
     "id" SERIAL NOT NULL,
     "uuid" VARCHAR(32) NOT NULL,
@@ -30,7 +26,6 @@ CREATE TABLE "user_info" (
     CONSTRAINT "user_info_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
 CREATE TABLE "session" (
     "id" SERIAL NOT NULL,
     "uuid" VARCHAR(32) NOT NULL,
@@ -47,7 +42,6 @@ CREATE TABLE "session" (
     CONSTRAINT "session_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
 CREATE TABLE "message" (
     "id" SERIAL NOT NULL,
     "uuid" VARCHAR(32) NOT NULL,
@@ -70,7 +64,6 @@ CREATE TABLE "message" (
     CONSTRAINT "message_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
 CREATE TABLE "group_info" (
     "id" SERIAL NOT NULL,
     "uuid" VARCHAR(32) NOT NULL,
@@ -89,7 +82,6 @@ CREATE TABLE "group_info" (
     CONSTRAINT "group_info_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
 CREATE TABLE "user_contact" (
     "id" SERIAL NOT NULL,
     "user_id" VARCHAR(32) NOT NULL,
@@ -105,7 +97,6 @@ CREATE TABLE "user_contact" (
     CONSTRAINT "user_contact_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
 CREATE TABLE "contact_apply" (
     "id" SERIAL NOT NULL,
     "uuid" VARCHAR(32) NOT NULL,
@@ -120,7 +111,6 @@ CREATE TABLE "contact_apply" (
     CONSTRAINT "contact_apply_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
 CREATE TABLE "contact_tag" (
     "id" SERIAL NOT NULL,
     "uuid" VARCHAR(32) NOT NULL,
@@ -132,7 +122,6 @@ CREATE TABLE "contact_tag" (
     CONSTRAINT "contact_tag_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
 CREATE TABLE "agent_sessions" (
     "id" UUID NOT NULL,
     "user_id" VARCHAR(32) NOT NULL,
@@ -148,7 +137,6 @@ CREATE TABLE "agent_sessions" (
     CONSTRAINT "agent_sessions_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
 CREATE TABLE "agent_interactions" (
     "id" UUID NOT NULL,
     "session_id" UUID NOT NULL,
@@ -164,65 +152,44 @@ CREATE TABLE "agent_interactions" (
     CONSTRAINT "agent_interactions_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex
 CREATE UNIQUE INDEX "user_info_uuid_key" ON "user_info"("uuid");
 
--- CreateIndex
 CREATE INDEX "idx_user_info_telephone" ON "user_info"("telephone");
 
--- CreateIndex
 CREATE UNIQUE INDEX "session_uuid_key" ON "session"("uuid");
 
--- CreateIndex
 CREATE INDEX "idx_session_send_receive" ON "session"("send_id", "receive_id");
 
--- CreateIndex
 CREATE INDEX "idx_session_receive" ON "session"("receive_id");
 
--- CreateIndex
 CREATE UNIQUE INDEX "message_uuid_key" ON "message"("uuid");
 
--- CreateIndex
 CREATE INDEX "idx_message_send_receive_created" ON "message"("send_id", "receive_id", "created_at");
 
--- CreateIndex
 CREATE INDEX "idx_message_receive_created" ON "message"("receive_id", "created_at");
 
--- CreateIndex
 CREATE UNIQUE INDEX "group_info_uuid_key" ON "group_info"("uuid");
 
--- CreateIndex
 CREATE INDEX "idx_group_info_owner" ON "group_info"("owner_id");
 
--- CreateIndex
 CREATE INDEX "idx_user_contact_pair" ON "user_contact"("user_id", "contact_id");
 
--- CreateIndex
 CREATE INDEX "idx_user_contact_contact" ON "user_contact"("contact_id");
 
--- CreateIndex
 CREATE UNIQUE INDEX "contact_apply_uuid_key" ON "contact_apply"("uuid");
 
--- CreateIndex
 CREATE INDEX "idx_contact_apply_contact_status" ON "contact_apply"("contact_id", "status");
 
--- CreateIndex
 CREATE INDEX "idx_contact_apply_pair" ON "contact_apply"("user_id", "contact_id");
 
--- CreateIndex
 CREATE UNIQUE INDEX "contact_tag_uuid_key" ON "contact_tag"("uuid");
 
--- CreateIndex
 CREATE INDEX "idx_contact_tag_user" ON "contact_tag"("user_id");
 
--- CreateIndex
 CREATE UNIQUE INDEX "agent_sessions_user_id_key" ON "agent_sessions"("user_id");
 
--- CreateIndex
 CREATE INDEX "idx_agent_sessions_user_update" ON "agent_sessions"("user_id", "update_time");
 
--- CreateIndex
 CREATE INDEX "idx_agent_interactions_session_status" ON "agent_interactions"("session_id", "status");
 
--- AddForeignKey
 ALTER TABLE "agent_interactions" ADD CONSTRAINT "agent_interactions_session_id_fkey" FOREIGN KEY ("session_id") REFERENCES "agent_sessions"("id") ON DELETE CASCADE ON UPDATE CASCADE;

@@ -1,8 +1,5 @@
 import { z } from "zod";
 
-// JSON-RPC 2.0 vocabulary of the /agent/ws bridge, mirroring the Go bridge
-// protocol (yukino/bridge/protocol.go).
-
 export interface RpcNotification {
   jsonrpc: "2.0";
   method: string;

@@ -6,7 +6,6 @@ import { fileURLToPath } from "node:url";
 import { VitePWA } from "vite-plugin-pwa";
 import { resolve, join } from "node:path";
 import { mkdirSync, readdirSync, renameSync } from "node:fs";
-/** Moves all emitted .map files into <outDir>/.sourcemaps after the bundle is written. */
 function moveSourcemaps(): Plugin {
   let outDir = "dist";
   return {
@@ -45,7 +44,10 @@ function fetchPriorityHints(): Plugin {
     enforce: "post",
     transformIndexHtml(html) {
       return html
-        .replace(/<link rel="stylesheet"/g, '<link rel="stylesheet" fetchpriority="high"')
+        .replace(
+          /<link rel="stylesheet"/g,
+          '<link rel="stylesheet" fetchpriority="high"',
+        )
         .replace(
           /<script type="module" crossorigin/g,
           '<script type="module" crossorigin fetchpriority="high"',
@@ -56,7 +58,6 @@ function fetchPriorityHints(): Plugin {
 
 const isProd = process.env.NODE_ENV === "production";
 
-// https://vite.dev/config/
 export default defineConfig({
   publicDir: resolve(import.meta.dirname, "public"),
   plugins: [
@@ -64,11 +65,14 @@ export default defineConfig({
     tailwindcss(),
     moveSourcemaps(),
     fetchPriorityHints(),
-    // Mock report endpoint for @yukino.js/sentry; dsn must match the init() call.
     sentryPlugin({ dsn: "/api/log" }),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.svg", "favicon.ico", "apple-touch-icon-180x180.png"],
+      includeAssets: [
+        "favicon.svg",
+        "favicon.ico",
+        "apple-touch-icon-180x180.png",
+      ],
       manifest: {
         name: "resume",
         short_name: "resume",
@@ -134,7 +138,6 @@ export default defineConfig({
     }),
   ],
   build: {
-    // "hidden": generate sourcemaps without appending sourceMappingURL comments to the bundle output
     sourcemap: "hidden",
   },
   resolve: {

@@ -20,8 +20,6 @@ const mergedFileName = (fileHash: string, extName: string) =>
 const chunkDir = (fileHash: string) => path.join(env.STATIC_CHUNK_DIR, fileHash.toLowerCase());
 
 export function registerFileRoutes(app: Hono<AppEnv>) {
-  // Reports whether the file already exists (instant upload) or which chunk
-  // indexes are still missing (resumable upload).
   app.post("/file/verify", async (c) => {
     const body = await bindBody(c);
     if (!body) return back(c, ["invalid request body", null, RET_SYSTEM]);
@@ -40,9 +38,7 @@ export function registerFileRoutes(app: Hono<AppEnv>) {
         { uploaded: true, url: `/static/files/${finalName}` },
         0,
       ]);
-    } catch {
-      // Not merged yet.
-    }
+    } catch {}
 
     const dir = chunkDir(fileHash);
     const pending: number[] = [];
@@ -56,7 +52,6 @@ export function registerFileRoutes(app: Hono<AppEnv>) {
     return back(c, ["success", { uploaded: false, pending_chunks: pending }, 0]);
   });
 
-  // Stores a single multipart chunk under the chunk directory.
   app.post("/file/upload-chunk", async (c) => {
     let form: Record<string, FormEntry | undefined>;
     try {
@@ -88,8 +83,6 @@ export function registerFileRoutes(app: Hono<AppEnv>) {
     return back(c, ["chunk uploaded", 0]);
   });
 
-  // Concatenates the uploaded chunks into the final file and removes the
-  // chunk directory.
   app.post("/file/merge", async (c) => {
     const body = await bindBody(c);
     if (!body) return back(c, ["invalid request body", null, RET_SYSTEM]);
@@ -140,8 +133,6 @@ export function registerFileRoutes(app: Hono<AppEnv>) {
         parts.push(data);
         total += data.byteLength;
       } catch {
-        // Delete the partial final so a later verify does not report an
-        // instant-upload success for a truncated file.
         await rm(finalPath, { force: true });
         return back(c, ["failed to merge file", -1]);
       }

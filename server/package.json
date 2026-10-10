@@ -8,10 +8,11 @@
     "dev": "tsx watch src/index.ts",
     "build": "prisma generate && tsc",
     "start": "node dist/index.js",
+    "format": "biome format --write",
     "test": "vitest run",
     "typecheck": "tsc -b --noEmit",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write .",
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "prisma:generate": "prisma generate"

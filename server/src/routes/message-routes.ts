@@ -16,8 +16,6 @@ const MAX_AVATAR_SIZE = 5 << 20;
 const MAX_FILE_SIZE = 50 << 20;
 const AVATAR_EXT_WHITELIST = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp"]);
 
-// Strips any path components and keeps only a safe character set, preventing
-// path traversal via the uploaded filename.
 export function sanitizeFilename(name: string): string {
   name = path.basename(name);
   let out = "";
@@ -54,7 +52,6 @@ async function saveUpload(
   const filename = `${randomId(8)}_${safeName}`;
   const dst = path.join(dir, filename);
   try {
-    // Stream to disk to avoid buffering 50 MiB uploads in memory.
     await pipeline(Readable.fromWeb(file.stream() as never), createWriteStream(dst));
   } catch {
     return { error: ["failed to save file", -1] };

@@ -6,7 +6,6 @@ export interface TokenClaims {
   exp: number;
 }
 
-// Same raw-base64url header bytes as the Go implementation.
 const JWT_HEADER = Buffer.from('{"alg":"HS256","typ":"JWT"}').toString("base64url");
 
 function sign(data: string, secret: string): string {

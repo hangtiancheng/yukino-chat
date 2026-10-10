@@ -6,7 +6,11 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { useNavigate } from "react-router-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { friendsQuery, groupSessionsQuery, userSessionsQuery } from "@/service/queries";
+import {
+  friendsQuery,
+  groupSessionsQuery,
+  userSessionsQuery,
+} from "@/service/queries";
 import useAuthStore from "@/store/auth";
 
 const itemClass =
@@ -26,7 +30,6 @@ export function CommandPalette() {
     enableOnFormTags: true,
   });
 
-  // Nothing is fetched until the palette is actually opened.
   const enabled = open && Boolean(userId);
   const { data: userSessions = [] } = useQuery({
     ...userSessionsQuery(userId),
@@ -65,15 +68,24 @@ export function CommandPalette() {
         </Command.Empty>
 
         <Command.Group heading="Go to" className={groupClass}>
-          <Command.Item className={itemClass} onSelect={() => go("/chat/sessions")}>
+          <Command.Item
+            className={itemClass}
+            onSelect={() => go("/chat/sessions")}
+          >
             <MessageSquare className="size-4" />
             Sessions
           </Command.Item>
-          <Command.Item className={itemClass} onSelect={() => go("/chat/contacts")}>
+          <Command.Item
+            className={itemClass}
+            onSelect={() => go("/chat/contacts")}
+          >
             <Users className="size-4" />
             Contacts
           </Command.Item>
-          <Command.Item className={itemClass} onSelect={() => go("/chat/profile")}>
+          <Command.Item
+            className={itemClass}
+            onSelect={() => go("/chat/profile")}
+          >
             <User className="size-4" />
             My Profile
           </Command.Item>
@@ -90,7 +102,11 @@ export function CommandPalette() {
           { heading: "Groups", rows: groupSessions },
         ].map(({ heading, rows }) =>
           rows.length === 0 ? null : (
-            <Command.Group key={heading} heading={heading} className={groupClass}>
+            <Command.Group
+              key={heading}
+              heading={heading}
+              className={groupClass}
+            >
               {rows.map((row) => (
                 <Command.Item
                   key={row.id}
@@ -131,8 +147,12 @@ export function CommandPalette() {
                     {friend.nickname.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <span className="truncate">{friend.note_name || friend.nickname}</span>
-                {friend.online && <span className="ml-auto size-2 rounded-full bg-emerald-500" />}
+                <span className="truncate">
+                  {friend.note_name || friend.nickname}
+                </span>
+                {friend.online && (
+                  <span className="ml-auto size-2 rounded-full bg-emerald-500" />
+                )}
               </Command.Item>
             ))}
           </Command.Group>

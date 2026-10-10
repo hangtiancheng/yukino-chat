@@ -12,9 +12,7 @@ describe("call manager", () => {
     const cm = new CallManager();
     expect(cm.join("P:a:b", "Ua")).toBe(true);
     expect(cm.isBusy("Ua")).toBe(true);
-    // Busy users cannot join a different room.
     expect(cm.join("P:a:c", "Ua")).toBe(false);
-    // Re-joining the same room is fine.
     expect(cm.join("P:a:b", "Ua")).toBe(true);
   });
 

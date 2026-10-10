@@ -26,9 +26,6 @@ interface IncomingRpc {
   params?: unknown;
 }
 
-// JSON-RPC 2.0 bridge to the per-user agent runtime, mirroring the Go
-// bridge's ws transport: server pushes notifications, client answers
-// permissions/questions or cancels with unary requests.
 export function registerAgentWsRoute(
   app: Hono<AppEnv>,
   deps: Deps,
@@ -90,7 +87,6 @@ export function registerAgentWsRoute(
           raw.send(JSON.stringify(rpcError(null, -32600, "invalid request")));
           return;
         }
-        // Client→server notifications are silently ignored (Go parity).
         if (frame.id === undefined || frame.id === null) return;
         const id = frame.id as number | string;
         const response = await dispatchControl(deps, uuid, frame.method, frame.params, id);

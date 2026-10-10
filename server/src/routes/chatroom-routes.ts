@@ -24,8 +24,6 @@ export function registerChatroomRoutes(app: Hono<AppEnv>, deps: Deps) {
   });
 }
 
-// The user is already in the room, the room is their own 1v1 pair room, or
-// the room is a group they belong to.
 async function canSeeCallRoom(deps: Deps, roomId: string, uuid: string): Promise<boolean> {
   if (uuid === "" || roomId === "") return false;
   if (deps.calls.inRoom(roomId, uuid)) return true;

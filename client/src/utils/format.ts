@@ -1,6 +1,12 @@
-import { format, formatDistanceToNowStrict, isToday, isValid, isYesterday, parse } from "date-fns";
+import {
+  format,
+  formatDistanceToNowStrict,
+  isToday,
+  isValid,
+  isYesterday,
+  parse,
+} from "date-fns";
 
-/** Go renders message timestamps as "2006-01-02 15:04:05", which is not ISO. */
 const WIRE_TIMESTAMP = "yyyy-MM-dd HH:mm:ss";
 
 function parseWireTimestamp(value: string): Date | null {
@@ -8,10 +14,6 @@ function parseWireTimestamp(value: string): Date | null {
   return isValid(parsed) ? parsed : null;
 }
 
-/**
- * Human-readable file size used when uploading files in chat.
- * Mirrors the source project's `getFileSize`.
- */
 export function getFileSize(size: number): string {
   if (size < 1024) return size + "B";
   if (size < 1024 * 1024) return (size / 1024).toFixed(2) + "KB";
@@ -19,20 +21,17 @@ export function getFileSize(size: number): string {
   return (size / 1024 / 1024 / 1024).toFixed(2) + "GB";
 }
 
-/** Compact size label for the dashboard cache rows. */
 export function formatSize(bytes: number): string {
   if (bytes < 1024) return bytes + " B";
   return (bytes / 1024).toFixed(1) + " KB";
 }
 
-/** Token counts run into the millions, so the assistant's meter abbreviates. */
 export function formatTokens(count: number): string {
   if (count >= 1_000_000) return (count / 1_000_000).toFixed(1) + "M";
   if (count >= 1000) return (count / 1000).toFixed(1) + "K";
   return String(count);
 }
 
-/** Cache entry expirations arrive as nanoseconds. */
 export function formatExpire(nanos: number): string {
   if (nanos <= 0 || nanos >= Number.MAX_SAFE_INTEGER) return "never";
   const expiresAt = new Date(nanos / 1_000_000);
@@ -40,13 +39,11 @@ export function formatExpire(nanos: number): string {
   return `${formatDistanceToNowStrict(expiresAt)} left`;
 }
 
-/** Clock time beside a chat bubble. */
 export function formatMessageTime(value: string): string {
   const parsed = parseWireTimestamp(value);
   return parsed ? format(parsed, "HH:mm") : value;
 }
 
-/** Day separator between chat bubbles. */
 export function formatMessageDay(value: string): string {
   const parsed = parseWireTimestamp(value);
   if (!parsed) return value;
@@ -55,13 +52,11 @@ export function formatMessageDay(value: string): string {
   return format(parsed, "PPP");
 }
 
-/** Groups messages sent on the same calendar day; "" when unparseable. */
 export function messageDayKey(value: string): string {
   const parsed = parseWireTimestamp(value);
   return parsed ? format(parsed, "yyyy-MM-dd") : "";
 }
 
-/** Timestamp shown on a session row in the sidebar. */
 export function formatSessionTime(epochMs: number): string {
   if (!epochMs) return "";
   const date = new Date(epochMs);

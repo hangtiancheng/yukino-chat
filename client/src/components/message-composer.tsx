@@ -21,10 +21,6 @@ import { MessageType } from "@/service/schemas";
 import { uploadInChunks, type UploadProgress } from "@/service/upload";
 import { getFileSize } from "@/utils/format";
 
-/**
- * Tiptap runs with every mark and input rule disabled so that literal markdown
- * survives to the server, where the bubble renderer turns it back into rich text.
- */
 const extensions = [
   StarterKit.configure({
     blockquote: false,
@@ -92,12 +88,9 @@ export interface ComposerPayload {
 interface MessageComposerProps {
   disabled?: boolean;
   onSend: (payload: ComposerPayload) => void;
-  /** Slash commands to offer while the text is a single "/word" token. */
   commands?: SlashCommand[];
-  /** True while the assistant is mid-reply, which adds a stop control. */
   streaming?: boolean;
   onStop?: () => void;
-  /** The assistant reads text only, so its thread hides uploads entirely. */
   allowAttachments?: boolean;
   placeholder?: string;
 }
@@ -118,7 +111,6 @@ export function MessageComposer({
   placeholder = "Type a message — markdown supported",
 }: MessageComposerProps) {
   const [progress, setProgress] = useState<UploadProgress | null>(null);
-  // Enter must not send while an editor popup owns the key.
   const sendRef = useRef<() => void>(() => {});
   const menuKeyRef = useRef<(event: KeyboardEvent) => boolean>(() => false);
 
@@ -141,7 +133,8 @@ export function MessageComposer({
     extensions,
     editorProps: {
       attributes: {
-        class: "min-h-24 max-h-32 overflow-y-auto px-3 py-2.5 text-sm leading-relaxed outline-none",
+        class:
+          "min-h-24 max-h-32 overflow-y-auto px-3 py-2.5 text-sm leading-relaxed outline-none",
       },
       handleKeyDown: (_view, event) => {
         if (menuKeyRef.current(event)) return true;
@@ -171,18 +164,16 @@ export function MessageComposer({
     index: 0,
   });
 
-  // The menu belongs on a bare "/word" only. The text is matched untrimmed on
-  // purpose: the space that follows a chosen command is what dismisses the
-  // list, so trimming it away would leave the menu stuck open.
   const query = /^\/\S*$/.test(text) ? text.slice(1) : null;
   const matches =
     query === null
       ? []
-      : commands.filter((command) => command.name.toLowerCase().startsWith(query.toLowerCase()));
+      : commands.filter((command) =>
+          command.name.toLowerCase().startsWith(query.toLowerCase()),
+        );
   const menuOpen = matches.length > 0 && dismissedQuery !== query;
-  // Both the highlight and the dismissal are tied to the query that produced
-  // them, so editing the text resets them without an effect.
-  const active = pick.query === query ? Math.min(pick.index, matches.length - 1) : 0;
+  const active =
+    pick.query === query ? Math.min(pick.index, matches.length - 1) : 0;
 
   const applyCommand = (name: string) => {
     editor?.chain().focus().clearContent().insertContent(`/${name} `).run();
@@ -197,8 +188,6 @@ export function MessageComposer({
     overscan: 8,
   });
 
-  // Keyboard moves queue a scroll here; hover highlights never do. The scroll
-  // itself runs after render, when the target row's true size is measured.
   const keyboardScrollRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -209,14 +198,10 @@ export function MessageComposer({
     if (row) {
       row.scrollIntoView({ block: "nearest" });
     } else {
-      // Wrap-around jump: the row is not rendered yet, so fall back to the
-      // virtualizer's estimated offset.
       rowVirtualizer.scrollToIndex(target);
     }
   });
 
-  // A new query means the user is typing: the highlight is back on the first
-  // match, so the list snaps back to the top. Hovering never scrolls.
   useEffect(() => {
     if (query !== null && matches.length > 0) rowVirtualizer.scrollToIndex(0);
   }, [query, matches.length, rowVirtualizer]);
@@ -236,8 +221,6 @@ export function MessageComposer({
     editor.commands.clearContent(true);
   };
 
-  // The editor's keydown handler is installed once, so it reads the newest
-  // closures through refs rather than capturing stale ones.
   useEffect(() => {
     sendRef.current = sendText;
     menuKeyRef.current = (event) => {
@@ -283,12 +266,10 @@ export function MessageComposer({
     },
   });
 
-  // A thread that takes no attachments simply does not wire the dropzone up.
-  // Disabling it instead would mark the whole composer aria-disabled, which
-  // makes every control inside it — the stop button included — read as dead.
   const dropProps = allowAttachments ? getRootProps() : {};
 
-  const insertEmoji = (emoji: string) => editor?.chain().focus().insertContent(emoji).run();
+  const insertEmoji = (emoji: string) =>
+    editor?.chain().focus().insertContent(emoji).run();
 
   return (
     <div
@@ -320,7 +301,10 @@ export function MessageComposer({
           aria-label="Slash commands"
           className="border-border bg-popover absolute bottom-full left-2 z-20 mb-1 max-h-60 w-80 overflow-y-auto rounded-lg border p-1 shadow-md"
         >
-          <div className="relative w-full" style={{ height: rowVirtualizer.getTotalSize() }}>
+          <div
+            className="relative w-full"
+            style={{ height: rowVirtualizer.getTotalSize() }}
+          >
             {rowVirtualizer.getVirtualItems().map((row) => {
               const command = matches[row.index];
               return (
@@ -332,7 +316,6 @@ export function MessageComposer({
                   role="option"
                   aria-selected={row.index === active}
                   onMouseDown={(event) => {
-                    // Keeps the editor focused so the insert lands in the doc.
                     event.preventDefault();
                     applyCommand(command.name);
                   }}
@@ -343,7 +326,9 @@ export function MessageComposer({
                   )}
                   style={{ transform: `translateY(${row.start}px)` }}
                 >
-                  <span className="font-mono text-xs font-medium">/{command.name}</span>
+                  <span className="font-mono text-xs font-medium">
+                    /{command.name}
+                  </span>
                   {command.description && (
                     <span className="text-muted-foreground line-clamp-2 text-xs">
                       {command.description}
@@ -367,10 +352,13 @@ export function MessageComposer({
 
       {progress && (
         <div className="flex items-center gap-2 px-3 pb-1">
-          <Progress value={(progress.completed / progress.total) * 100} className="flex-1" />
+          <Progress
+            value={(progress.completed / progress.total) * 100}
+            className="flex-1"
+          />
           <span className="text-muted-foreground text-[10px] tabular-nums">
-            {progress.phase === "hashing" ? "Hashing" : "Uploading"} {progress.completed}/
-            {progress.total}
+            {progress.phase === "hashing" ? "Hashing" : "Uploading"}{" "}
+            {progress.completed}/{progress.total}
           </span>
         </div>
       )}

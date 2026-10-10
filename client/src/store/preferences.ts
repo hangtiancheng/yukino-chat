@@ -2,7 +2,6 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 export interface PreferencesState {
-  /** Kept in localStorage so it survives the sessionStorage-scoped auth state. */
   rememberedPhone: string;
   setRememberedPhone: (phone: string) => void;
 }

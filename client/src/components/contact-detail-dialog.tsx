@@ -38,7 +38,9 @@ export function ContactDetailDialog({
   contact,
   isGroup,
 }: ContactDetailDialogProps) {
-  const freeText = isGroup ? contact?.contact_notice : contact?.contact_signature;
+  const freeText = isGroup
+    ? contact?.contact_notice
+    : contact?.contact_signature;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -57,20 +59,33 @@ export function ContactDetailDialog({
                 <InfoRow label="Owner" value={contact.contact_owner_id} />
                 <InfoRow
                   label="Join Mode"
-                  value={contact.contact_add_mode === 0 ? "Direct Join" : "Owner Approval"}
+                  value={
+                    contact.contact_add_mode === 0
+                      ? "Direct Join"
+                      : "Owner Approval"
+                  }
                 />
               </>
             ) : (
               <>
-                <InfoRow label="Gender" value={contact.contact_gender === 0 ? "Male" : "Female"} />
+                <InfoRow
+                  label="Gender"
+                  value={contact.contact_gender === 0 ? "Male" : "Female"}
+                />
                 <InfoRow label="Phone" value={contact.contact_phone} />
                 <InfoRow label="Email" value={contact.contact_email} />
                 <InfoRow label="Birthday" value={contact.contact_birthday} />
               </>
             )}
             <div className="py-1.5">
-              <span className="text-muted-foreground">{isGroup ? "Notice" : "Signature"}</span>
-              <Linkify as="p" options={linkOptions} className="text-foreground mt-1 break-words">
+              <span className="text-muted-foreground">
+                {isGroup ? "Notice" : "Signature"}
+              </span>
+              <Linkify
+                as="p"
+                options={linkOptions}
+                className="text-foreground mt-1 break-words"
+              >
                 {freeText || "—"}
               </Linkify>
             </div>
