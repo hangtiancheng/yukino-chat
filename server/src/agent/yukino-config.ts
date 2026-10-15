@@ -2,7 +2,7 @@ import { Config } from "@yukino.js/yukino";
 import { env } from "../config/env.js";
 
 export interface AgentConfig {
-  provider: Config.ProviderConfig;
+  provider: Config.ProviderConfig.ProviderConfig;
   mcpServers: Config.MCPServerConfig[];
   hooks: Config.HookConfig[];
   permissionMode: string;
@@ -19,16 +19,17 @@ export function loadAgentConfig(): AgentConfig | null {
 function resolve(): AgentConfig | null {
   try {
     const cfg = Config.loadConfig("", { allowEmptyProviders: true });
-    const providers = (cfg as { providers?: Config.ProviderConfig[] }).providers ?? [];
+    const providers =
+      (cfg as { providers?: Config.ProviderConfig.ProviderConfig[] }).providers ?? [];
     if (providers.length > 0) {
       const config = cfg as {
-        providers: Config.ProviderConfig[];
+        providers: Config.ProviderConfig.ProviderConfig[];
         mcp_servers?: Config.MCPServerConfig[];
         hooks?: Config.HookConfig[];
         permission_mode?: string;
       };
       return {
-        provider: config.providers[0] as Config.ProviderConfig,
+        provider: config.providers[0] as Config.ProviderConfig.ProviderConfig,
         mcpServers: config.mcp_servers ?? [],
         hooks: config.hooks ?? [],
         permissionMode: config.permission_mode ?? "default",

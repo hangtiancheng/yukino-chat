@@ -92,7 +92,7 @@ export class AgentRuntime {
       await mkdir(this.workDir, { recursive: true });
       const handle = await Remote.Server.createRemoteAgent({
         provider: this.config.provider,
-        workDir: this.workDir,
+        cwd: this.workDir,
         mcpServers: this.config.mcpServers,
         hooks: this.config.hooks,
         enableCoordinatorMode: false,
@@ -247,22 +247,22 @@ export class AgentRuntime {
       registry: handle.registry,
       checker,
       conversation: handle.conv,
-      workDir: this.workDir,
+      cwd: this.workDir,
       sessionId: "",
       fileHistory: handle.fileHistory,
       fileStateCache: handle.fileStateCache,
       abortSignal: abort.signal,
       contextWindow: handle.contextWindow,
-      maxOutput: Config.getMaxOutputTokens(handle.provider),
+      maxOutput: Config.ProviderConfig.getMaxOutputTokens(handle.provider),
       recoveryState: handle.recoveryState,
       activeSkills: handle.activeSkills,
       instructions: handle.longTermMemoryInstructions,
       memoryContent: handle.longTermMemoryMemoryContent,
       skillSection: handle.skillCatalog
-        ? Skills.Catalog.buildSkillSection(handle.skillCatalog, this.workDir)
+        ? Skills.Catalog.buildSkillSection(handle.skillCatalog)
         : "",
       notificationFn: () => [
-        ...handle.teamManager.drainLeads(),
+        ...handle.teamManager.drainLeaderMailbox(),
         ...handle.backgroundTaskManager
           .drainNotifications()
           .map(Subagent.TaskManager.formatAgentTaskNotification),
