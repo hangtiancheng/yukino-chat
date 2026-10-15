@@ -1,15 +1,6 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
-import {
-  Agent,
-  Compact,
-  Config,
-  MCP,
-  Permissions,
-  Remote,
-  Skills,
-  Subagent,
-} from "@yukino.js/yukino";
+import { Compact, Permissions, Remote, Session } from "@yukino.js/yukino";
 import { env } from "../config/env.js";
 import type { AgentStores } from "./agent-stores.js";
 import { EventAdapter } from "./event-adapter.js";
@@ -56,17 +47,17 @@ export class AgentRuntime {
   private readonly stores: AgentStores;
   private readonly sink: ChatSink;
   private readonly broker = new InteractionBroker();
-  private readonly mcpAnnounced = new Set<string>();
   private readonly connections = new Set<AgentConnection>();
+  private readonly describer: Permissions.PermissionChecker;
 
   private handlePromise: Promise<Handle> | null = null;
+  private handle: Handle | null = null;
   private sessionId = "";
   private permissionMode: Permissions.PermissionMode = "default";
 
   private queue: PromptJob[] = [];
   private workerActive = false;
-  private abortController: AbortController | null = null;
-  private cancelRequested = false;
+  private activeAdapter: EventAdapter | null = null;
   private turnStartedAt = 0;
 
   private streaming = false;
@@ -82,6 +73,14 @@ export class AgentRuntime {
     this.stores = options.stores;
     this.sink = options.sink;
     this.permissionMode = normalizeMode(options.config.permissionMode);
+    this.describer = new Permissions.PermissionChecker(this.workDir, this.permissionMode);
+  }
+
+  private setPermissionMode(mode: Permissions.PermissionMode) {
+    this.permissionMode = mode;
+    void this.handlePromise?.then((handle) => {
+      handle.permissionMode = mode;
+    });
   }
 
   private ensureReady(): Promise<Handle> {
@@ -99,6 +98,8 @@ export class AgentRuntime {
         forkDisabled: false,
         askUser: (questions) => this.askUser(questions),
       });
+      this.handle = handle;
+      handle.permissionMode = this.permissionMode;
       await this.rehydrate(handle);
       return handle;
     })();
@@ -227,48 +228,15 @@ export class AgentRuntime {
     }
 
     this.streaming = true;
-    this.cancelRequested = false;
     this.turnStartedAt = Date.now();
     this.notifyAll("agent/run_start", { userMessageId: job.messageId });
     this.anchorId = job.messageId;
 
-    handle.conv.addUserMessage(job.content);
-    if (handle.mcpManager) {
-      MCP.Instructions.syncMcpInstructions(handle.conv, this.mcpAnnounced, handle.mcpManager);
-    }
-
-    const checker = new Permissions.PermissionChecker(this.workDir, this.permissionMode);
-    const abort = new AbortController();
-    this.abortController = abort;
     const adapter = new EventAdapter(() => (Date.now() - this.turnStartedAt) / 1000);
-
-    const agent = new Agent.Agent({
-      client: handle.client,
-      registry: handle.registry,
-      checker,
-      conversation: handle.conv,
-      cwd: this.workDir,
-      sessionId: "",
-      fileHistory: handle.fileHistory,
-      fileStateCache: handle.fileStateCache,
-      abortSignal: abort.signal,
-      contextWindow: handle.contextWindow,
-      maxOutput: Config.ProviderConfig.getMaxOutputTokens(handle.provider),
-      recoveryState: handle.recoveryState,
-      activeSkills: handle.activeSkills,
-      instructions: handle.longTermMemoryInstructions,
-      memoryContent: handle.longTermMemoryMemoryContent,
-      skillSection: handle.skillCatalog
-        ? Skills.Catalog.buildSkillSection(handle.skillCatalog)
-        : "",
-      notificationFn: () => [
-        ...handle.teamManager.drainLeaderMailbox(),
-        ...handle.backgroundTaskManager
-          .drainNotifications()
-          .map(Subagent.TaskManager.formatAgentTaskNotification),
-      ],
+    this.activeAdapter = adapter;
+    const callbacks: Remote.Server.RunCallbacks = {
       onPermissionRequest: async (toolName, args) => {
-        const description = checker.describeToolAction(toolName, args);
+        const description = this.describer.describeToolAction(toolName, args);
         const params: PermissionRequestParams = {
           id: `perm_${process.hrtime.bigint()}`,
           toolName,
@@ -277,32 +245,32 @@ export class AgentRuntime {
         this.notifyAll("permission/request", params as never);
         return this.broker.requestPermission(params);
       },
-    });
+    };
 
     try {
-      for await (const event of agent.run()) {
+      for await (const event of handle.run(job.content, callbacks)) {
         for (const action of adapter.map(event)) {
           if (action.kind === "notify") {
             this.notifyAll(action.method, action.params);
           } else {
-            await this.flushText(handle, job.chatSessionId, adapter);
+            await this.flushText(job.chatSessionId, adapter);
           }
         }
       }
       if (!adapter.completed) {
-        await this.flushText(handle, job.chatSessionId, adapter);
-        if (adapter.cancelRequested) {
-          this.notifyAll("agent/system", { message: "Stopped." });
-        }
+        await this.flushText(job.chatSessionId, adapter);
+      }
+      if (adapter.cancelRequested) {
+        this.notifyAll("agent/system", { message: "Stopped." });
       }
     } finally {
-      this.abortController = null;
+      this.activeAdapter = null;
       this.streaming = false;
       await this.saveContext(handle);
     }
   }
 
-  private async flushText(_handle: Handle, chatSessionId: string, adapter: EventAdapter) {
+  private async flushText(chatSessionId: string, adapter: EventAdapter) {
     const text = adapter.takeStreamText();
     if (text === "") return;
     const messageId = await this.sink.saveAssistantText(this.userId, chatSessionId, text);
@@ -331,15 +299,18 @@ export class AgentRuntime {
         return;
       }
       case "/clear": {
-        handle.conv.reset();
-        this.mcpAnnounced.clear();
+        handle.clearConversation();
         await this.saveContext(handle);
         this.notifyAll("session/context_cleared");
         return;
       }
       case "/compact": {
-        const schemas = handle.registry.getAllSchemas(handle.client.protocol ?? "anthropic");
-        const toolNames = handle.registry.listTools().map((t) => t.name);
+        const protocol = handle.client.protocol ?? "anthropic";
+        const schemas = handle.registry.getAllSchemas(protocol, handle.toolFilter ?? undefined);
+        const toolNames = handle.registry.listVisibleToolNames(
+          protocol,
+          handle.toolFilter ?? undefined,
+        );
         try {
           const result = await Compact.Compact.forceCompact(
             handle.conv,
@@ -351,6 +322,9 @@ export class AgentRuntime {
             undefined,
             args,
           );
+          if (result.boundary) {
+            Session.saveCompactBoundary(handle.cwd, handle.sessionId, result.boundary);
+          }
           this.notifyAll("agent/compact", { message: result.message });
         } catch (err) {
           this.notifyAll("agent/error", { message: describeError(err) });
@@ -359,7 +333,7 @@ export class AgentRuntime {
       }
       case "/plan": {
         const entering = this.permissionMode !== "plan";
-        this.permissionMode = entering ? "plan" : "default";
+        this.setPermissionMode(entering ? "plan" : "default");
         this.notifyAll("agent/system", {
           message: entering
             ? "Plan mode enabled — Yukino will read and research without writing."
@@ -383,8 +357,8 @@ export class AgentRuntime {
   }
 
   cancel() {
-    this.cancelRequested = true;
-    this.abortController?.abort();
+    if (this.activeAdapter) this.activeAdapter.cancelRequested = true;
+    this.handle?.abort();
     this.broker.cancelAll("run cancelled");
   }
 
