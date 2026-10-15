@@ -175,6 +175,11 @@ assert.equal(typeof connected.params.model, "string");
 assert.equal(connected.params.ready, true);
 const commands = parse(await agentSock.next(60000));
 assert.equal(commands.method, "session/commands");
+assert.ok(Array.isArray(commands.params.commands), "session/commands params.commands must be an array");
+assert.ok(
+  commands.params.commands.every((c) => typeof c.name === "string" && typeof c.description === "string"),
+  "each command needs name + description",
+);
 
 agentSock.send({ jsonrpc: "2.0", id: 1, method: "ping" });
 const pong = parse(await agentSock.next(5000, (q) => q.text.includes('"id":1')));

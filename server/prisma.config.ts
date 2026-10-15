@@ -3,7 +3,7 @@ import { defineConfig } from "prisma/config";
 import { z } from "zod";
 
 const prismaEnvSchema = z.object({
-  DATABASE_URL: z.url().default("postgresql://root:pass@localhost:5432/yukino_chat"),
+  DATABASE_URL: z.url().default("postgresql://yukino:yukino@localhost:5432/yukino_chat"),
 });
 
 const prismaEnv = prismaEnvSchema.parse(process.env);

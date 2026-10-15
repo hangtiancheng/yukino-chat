@@ -41,7 +41,9 @@ async function downloadFile(url: string, name: string) {
     link.click();
     link.remove();
     URL.revokeObjectURL(objectUrl);
-  } catch {}
+  } catch {
+    return;
+  }
 }
 
 function initialOf(name: string): string {

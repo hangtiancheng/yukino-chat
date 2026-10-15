@@ -6,12 +6,12 @@ import {
 import { ReactErrorBoundary } from "@yukino.js/sentry/react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { MotionConfig } from "motion/react";
-import { ThemeProvider } from "next-themes";
 import { createRoot } from "react-dom/client";
 
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { queryClient } from "@/lib/query-client";
+import { initTheme } from "@/store/theme";
 import App from "./app";
 import "./index.css";
 
@@ -19,6 +19,8 @@ if (import.meta.env.DEV) {
   init({ dsn: "/api/log", projectId: "yukino-chat" });
   enablePlugin(new PerformancePlugin(), new ScreenRecordPlugin());
 }
+
+initTheme();
 
 createRoot(document.getElementById("root")!).render(
   <ReactErrorBoundary
@@ -31,19 +33,12 @@ createRoot(document.getElementById("root")!).render(
     }
   >
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
-        <MotionConfig reducedMotion="user">
-          <TooltipProvider delay={300}>
-            <App />
-            <Toaster position="top-right" richColors closeButton />
-          </TooltipProvider>
-        </MotionConfig>
-      </ThemeProvider>
+      <MotionConfig reducedMotion="user">
+        <TooltipProvider delay={300}>
+          <App />
+          <Toaster position="top-right" richColors closeButton />
+        </TooltipProvider>
+      </MotionConfig>
     </QueryClientProvider>
   </ReactErrorBoundary>,
 );

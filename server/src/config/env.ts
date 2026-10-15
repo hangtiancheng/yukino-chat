@@ -4,7 +4,7 @@ import { z } from "zod";
 const envSchema = z.object({
   PORT: z.coerce.number().default(8000),
   HOST: z.string().default("0.0.0.0"),
-  DATABASE_URL: z.url().default("postgresql://root:pass@localhost:5432/yukino_chat"),
+  DATABASE_URL: z.url().default("postgresql://yukino:yukino@localhost:5432/yukino_chat"),
   REDIS_URL: z.string().default("redis://localhost:6379"),
   JWT_SECRET: z.string().default("yukino-chat-jwt-secret"),
   TOKEN_EXPIRE_HOURS: z.coerce.number().default(336),

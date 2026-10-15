@@ -30,7 +30,10 @@ export interface Question {
 export type AgentNotification =
   | { method: "session/connected"; params: AgentConnected }
   | { method: "session/ready" }
-  | { method: "session/commands"; params?: SlashCommand[] | null }
+  | {
+      method: "session/commands";
+      params?: { commands: SlashCommand[] } | null;
+    }
   | { method: "session/context_cleared" }
   | { method: "session/command_done" }
   | { method: "agent/run_start"; params: { userMessageId: string } }

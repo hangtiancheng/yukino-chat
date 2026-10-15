@@ -151,7 +151,12 @@ function apply(state: Snapshot, event: AgentNotification): Snapshot {
       return { ...state, ready: true };
 
     case "session/commands":
-      return { ...state, commands: event.params ?? [] };
+      return {
+        ...state,
+        commands: Array.isArray(event.params?.commands)
+          ? event.params.commands
+          : [],
+      };
 
     case "agent/run_start":
       return {

@@ -5,6 +5,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev:client": "pnpm -C client dev",
+    "dev:server": "pnpm -C server dev",
+    "dev": "run-p dev:*",
     "build:client": "pnpm -C client build",
     "build:server": "pnpm -C server build",
     "build": "run-p build:*",
