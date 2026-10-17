@@ -82,6 +82,7 @@ function notice(
   state: Snapshot,
   tone: "info" | "error" | "done",
   content: string,
+  markdown?: boolean,
 ): Snapshot {
   const last = state.items.at(-1);
   if (
@@ -97,6 +98,7 @@ function notice(
     anchorId: state.anchorId,
     tone,
     content,
+    ...(markdown ? { markdown: true } : {}),
   });
 }
 
@@ -342,7 +344,7 @@ function apply(state: Snapshot, event: AgentNotification): Snapshot {
       return { ...state, usage: event.params };
 
     case "agent/system":
-      return notice(state, "info", event.params.message);
+      return notice(state, "info", event.params.message, event.params.markdown);
 
     case "agent/error":
       return notice(

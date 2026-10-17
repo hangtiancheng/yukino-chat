@@ -23,7 +23,7 @@
     "@hono/zod-validator": "^0.7.6",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
-    "@yukino.js/yukino": "latest",
+    "@yukino.js/yukino": "0.0.16",
     "archiver": "^7.0.1",
     "bcryptjs": "^3.0.3",
     "dayjs": "^1.11.23",

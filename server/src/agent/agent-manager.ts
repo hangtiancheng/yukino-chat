@@ -1,14 +1,18 @@
-import path from "node:path";
 import { newMessage, YUKINO_NAME, YUKINO_UUID } from "../common/ids.js";
 import { fmtDateTime, nowDate } from "../common/time.js";
 import { env } from "../config/env.js";
 import type { PrismaDB } from "../database/prisma.js";
 import type { ChatHub } from "../hub/chat-hub.js";
-import { AgentRuntime, type ChatSink } from "./agent-runtime.js";
+import { AgentRuntime, type ChatSink, makeWorkDir } from "./agent-runtime.js";
 import { AgentStores } from "./agent-stores.js";
 import { loadAgentConfig } from "./yukino-config.js";
 
-const IDLE_SWEEP_INTERVAL_MS = 60_000;
+/**
+ * Single cadence for both the connection heartbeat and idle eviction. 30s
+ * matches the remote server's ping interval; a half-open socket is dropped
+ * once it has been unseen for the runtime's HEARTBEAT_STALE_MS.
+ */
+const SWEEP_INTERVAL_MS = 30_000;
 
 export class AgentManager {
   private runtimes = new Map<string, AgentRuntime>();
@@ -28,12 +32,21 @@ export class AgentManager {
 
   start() {
     if (this.sweepTimer) return;
-    this.sweepTimer = setInterval(() => this.sweepIdle(), IDLE_SWEEP_INTERVAL_MS);
+    this.sweepTimer = setInterval(() => this.sweep(), SWEEP_INTERVAL_MS);
   }
 
-  private sweepIdle() {
+  /**
+   * One periodic pass over every live runtime: first heartbeat its
+   * connections (terminating half-open sockets so connectionCount reflects
+   * reality), then evict runtimes that are disconnected, idle and not mid-run.
+   * The heartbeat is what makes eviction safe in a multi-user host — a client
+   * that vanished without a close frame would otherwise pin its runtime, and
+   * its whole agent handle, forever.
+   */
+  private sweep() {
     const now = Date.now();
     for (const [uuid, runtime] of this.runtimes) {
+      runtime.sweepConnections(now);
       if (
         !runtime.isBusy() &&
         runtime.connectionCount === 0 &&
@@ -54,7 +67,7 @@ export class AgentManager {
       }
       runtime = new AgentRuntime({
         userId,
-        workDir: path.join(process.cwd(), ".yukino", "chat", userId),
+        workDir: makeWorkDir(process.cwd(), userId),
         config,
         stores: this.stores,
         sink: this.sink,

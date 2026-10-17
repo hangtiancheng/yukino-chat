@@ -70,7 +70,10 @@ export type AgentNotification =
       method: "agent/usage";
       params: { inputTokens: number; outputTokens: number };
     }
-  | { method: "agent/system"; params: { message: string } }
+  | {
+      method: "agent/system";
+      params: { message: string; markdown?: boolean };
+    }
   | { method: "agent/error"; params: { message: string } }
   | { method: "agent/compact"; params: { message: string } }
   | { method: "agent/retry"; params: { reason: string; waitMs: number } }
@@ -144,6 +147,8 @@ export interface AgentNoticeItem extends Anchored {
   kind: "notice";
   tone: "info" | "error" | "done";
   content: string;
+  /** Render content as markdown (e.g. the /help command table). */
+  markdown?: boolean;
 }
 
 export type AgentItem =

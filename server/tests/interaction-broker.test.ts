@@ -51,6 +51,49 @@ describe("interaction broker", () => {
     expect(broker.hasPending()).toBe(false);
   });
 
+  it("settles a permission to deny when its abort signal fires", async () => {
+    const broker = new InteractionBroker();
+    const controller = new AbortController();
+    const promise = broker.requestPermission(
+      { id: "perm_abort", toolName: "Bash", description: "x" },
+      controller.signal,
+    );
+    expect(broker.hasPending()).toBe(true);
+    controller.abort();
+    await expect(promise).resolves.toBe("deny");
+    // The entry is gone, so a late client response is a no-op (returns false).
+    expect(broker.hasPending()).toBe(false);
+    expect(broker.resolvePermission("perm_abort", "allow")).toBe(false);
+  });
+
+  it("denies immediately when the signal is already aborted", async () => {
+    const broker = new InteractionBroker();
+    const controller = new AbortController();
+    controller.abort();
+    const promise = broker.requestPermission(
+      { id: "perm_pre", toolName: "Bash", description: "x" },
+      controller.signal,
+    );
+    await expect(promise).resolves.toBe("deny");
+    expect(broker.hasPending()).toBe(false);
+  });
+
+  it("detaches the abort listener once resolved normally", async () => {
+    const broker = new InteractionBroker();
+    const controller = new AbortController();
+    const remove = vi.spyOn(controller.signal, "removeEventListener");
+    const promise = broker.requestPermission(
+      { id: "perm_off", toolName: "Bash", description: "x" },
+      controller.signal,
+    );
+    expect(broker.resolvePermission("perm_off", "allow")).toBe(true);
+    await expect(promise).resolves.toBe("allow");
+    expect(remove).toHaveBeenCalledWith("abort", expect.any(Function));
+    // Aborting afterwards must not flip the already-settled decision.
+    controller.abort();
+    expect(broker.hasPending()).toBe(false);
+  });
+
   it("snapshots pending prompts for reconnect replay", async () => {
     const broker = new InteractionBroker();
     void broker.requestPermission({ id: "perm_4", toolName: "Bash", description: "x" });

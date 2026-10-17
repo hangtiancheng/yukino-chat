@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Hono } from "hono";
 import type { UpgradeWebSocket } from "hono/ws";
 import type { WebSocket } from "ws";
-import type { AgentRuntime } from "../agent/agent-runtime.js";
+import type { AgentConnection, AgentRuntime } from "../agent/agent-runtime.js";
 import {
   cancelSchema,
   ERROR_METHOD_NOT_FOUND,
@@ -37,23 +37,57 @@ export function registerAgentWsRoute(
       return c.json({ code: 401, message: "invalid or expired token" });
     }
     const uuid = claims.uuid;
+    // Held in the upgrade closure so onClose/onError can detach: without this
+    // the runtime's connection slot is never released, connectionCount stays
+    // above zero forever, and idle eviction can never reclaim the per-user
+    // agent handle (a leak that grows with every distinct user).
+    let conn: AgentConnection | null = null;
+    let runtime: AgentRuntime | null = null;
+
+    const detach = () => {
+      if (runtime && conn) runtime.detach(conn);
+      runtime = null;
+      conn = null;
+    };
 
     return upgradeWebSocket(c, {
       onOpen: async (_evt, wsCtx) => {
         const raw = wsCtx.raw;
         if (!raw) return;
-        const conn = {
+        const connection: AgentConnection = {
           id: randomUUID(),
+          lastSeen: Date.now(),
           send: (msg: object) => {
             if (raw.readyState === raw.OPEN) raw.send(JSON.stringify(msg));
           },
           close: (code?: number, reason?: string) => raw.close(code, reason),
+          ping: () => {
+            if (raw.readyState === raw.OPEN) {
+              try {
+                raw.ping();
+              } catch {
+                // Dead socket: the heartbeat sweep will drop it.
+              }
+            }
+          },
+          terminate: () => {
+            try {
+              raw.terminate();
+            } catch {
+              // Already gone.
+            }
+          },
         };
+        conn = connection;
+        // Any inbound frame or pong proves the socket is live.
+        raw.on("pong", () => {
+          connection.lastSeen = Date.now();
+        });
         try {
-          const runtime = await deps.agent.getOrCreate(uuid);
-          await runtime.attach(conn);
+          runtime = await deps.agent.getOrCreate(uuid);
+          await runtime.attach(connection);
         } catch (err) {
-          conn.send({
+          connection.send({
             jsonrpc: "2.0",
             method: "agent/error",
             params: {
@@ -66,6 +100,7 @@ export function registerAgentWsRoute(
       onMessage: async (evt, wsCtx) => {
         const raw = wsCtx.raw;
         if (!raw) return;
+        if (conn) conn.lastSeen = Date.now();
         const data = evt.data;
         if (typeof data !== "string") return;
         if (Buffer.byteLength(data, "utf8") > MAX_MESSAGE_BYTES) {
@@ -91,6 +126,12 @@ export function registerAgentWsRoute(
         const id = frame.id as number | string;
         const response = await dispatchControl(deps, uuid, frame.method, frame.params, id);
         if (response) raw.send(JSON.stringify(response));
+      },
+      onClose: () => {
+        detach();
+      },
+      onError: () => {
+        detach();
       },
     });
   });

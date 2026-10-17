@@ -180,7 +180,19 @@ function NoticeBlock({ item }: { item: AgentNoticeItem }) {
       )}
     >
       <Icon className="mt-0.5 size-3.5 shrink-0" />
-      <span className="whitespace-pre-wrap">{item.content}</span>
+      {item.markdown ? (
+        <div className="text-muted-foreground min-w-0 flex-1 text-xs">
+          <Suspense
+            fallback={
+              <span className="whitespace-pre-wrap">{item.content}</span>
+            }
+          >
+            <MessageContent content={item.content} />
+          </Suspense>
+        </div>
+      ) : (
+        <span className="whitespace-pre-wrap">{item.content}</span>
+      )}
     </div>
   );
 }

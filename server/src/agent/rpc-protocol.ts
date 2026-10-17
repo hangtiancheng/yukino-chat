@@ -67,10 +67,3 @@ export interface QuestionRequestParams {
     multiSelect: boolean;
   }[];
 }
-
-export const SERVER_COMMANDS = [
-  { name: "help", description: "Show available commands" },
-  { name: "clear", description: "Clear conversation context" },
-  { name: "compact", description: "Force context compaction" },
-  { name: "plan", description: "Toggle plan mode (read-only)" },
-];

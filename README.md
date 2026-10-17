@@ -72,8 +72,32 @@ agent workspace, streamed live into the conversation.
 
 - **One private agent per user**, embedded in-process through the
   `@yukino.js/yukino` package and living in an isolated workspace under
-  `.yukino/chat/<uid>`; runtimes are created lazily and evicted after 30
-  minutes of idle time.
+  `.yukino/chat/<uid>` (the id is reduced to a safe path segment so a crafted
+  user id cannot traverse into another workspace); runtimes are created lazily
+  and evicted after 30 minutes of idle time.
+- **Connection lifecycle hardened for many users** (mirrors Yukino's own
+  `remote` server): `/agent/ws` detaches on close/error and a 30 s ping/pong
+  heartbeat terminates half-open sockets, so `connectionCount` actually returns
+  to zero and idle eviction can reclaim each per-user handle (LLM client, MCP
+  connections, registry, conversation) instead of leaking it. A failed agent
+  init is not cached — the next message retries — and a library-side abort
+  settles a pending permission prompt immediately rather than pinning the run
+  until the interaction timeout. Degraded events (failed tools, retries,
+  compaction, agent errors) are logged server-side as JSONL keyed by user.
+- **Read-only tool policy for the multi-user host**: the agent only sees
+  Yukino's read tools (`ReadFile`/`Glob`/`Grep`/`WebFetch`, task board,
+  `LoadSkill`, `AskUserQuestion`, MCP dispatch). Write/command tools (Bash,
+  `EditFile`, `WriteFile`, worktree, teams, subagent spawning) are filtered
+  out of both the advertised schemas and execution. Path reads are contained
+  to the user's own workspace (symlink-aware), `WebFetch` is guarded by
+  Yukino's public-URL assertion (no loopback/private/SSRF targets), and
+  fork-mode skills run in read-only subagents — delegation is not a write
+  escape hatch.
+- **Slash commands & skills** wired from the Yukino command registry:
+  `/help`, `/status`, `/clear`, `/compact`, `/skills`, `/goal`, user commands
+  (`~/.yukino/prompts`) and skills (`~/.yukino/skills`, `~/.agents/skills`)
+  — inline skills run in-conversation, fork skills in a read-only subagent.
+  Host-only commands (`/quit`, `/model`, `/resume`, …) are rejected.
 - Live streaming of token deltas, thinking, tool calls and permission prompts
   over a dedicated `/agent/ws` socket using JSON-RPC 2.0; finalized replies
   are written back into the chat transcript as ordinary messages so they

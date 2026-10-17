@@ -11,6 +11,8 @@ interface AgentSessionRow {
 
 export interface AgentContext {
   messages: Conversation.Message[];
+  /** Names of skills activated in the persisted conversation. */
+  activeSkills: string[];
 }
 
 export class AgentStores {
@@ -34,12 +36,17 @@ export class AgentStores {
   async loadContext(sessionId: string): Promise<AgentContext> {
     const row = await this.db.agentSession.findUnique({
       where: { id: sessionId },
-      select: { context: true },
+      select: { context: true, activeSkills: true },
     });
-    if (!row) return { messages: [] };
+    if (!row) return { messages: [], activeSkills: [] };
     const ctx = row.context as { messages?: unknown };
-    if (!ctx || !Array.isArray(ctx.messages)) return { messages: [] };
-    return { messages: ctx.messages as Conversation.Message[] };
+    const messages =
+      ctx && Array.isArray(ctx.messages) ? (ctx.messages as Conversation.Message[]) : [];
+    const rawSkills = row.activeSkills as unknown;
+    const activeSkills = Array.isArray(rawSkills)
+      ? rawSkills.filter((name): name is string => typeof name === "string")
+      : [];
+    return { messages, activeSkills };
   }
 
   async saveContext(

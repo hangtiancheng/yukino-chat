@@ -1,5 +1,4 @@
 - ./ is React frontend project, recommend skills: shadcn
-- ./server is Go backend project: @server/cmd/main.go, recommend skills: yukino-http, yukino-orm
-- ./server/internal/yukino -- the Yukino agent embedded in the chat server via @server/internal/ws, try not to modify the agent code.
+- ./server is TS backend project
 - respect to eslint.config.js
 - Use codegraph to speed up code exploration
