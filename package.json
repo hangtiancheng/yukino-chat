@@ -19,6 +19,6 @@
     "git:push": "pnpm git:commit && git push origin main"
   },
   "devDependencies": {
-    "npm-run-all2": "^9.0.3"
+    "npm-run-all2": "^9.0.4"
   }
 }
