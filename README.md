@@ -122,7 +122,7 @@ agent workspace, streamed live into the conversation.
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Frontend | React 19, Vite 8, TypeScript 6, Tailwind CSS v4, shadcn/ui, Zustand, TanStack Query/Form/Virtual, TipTap 3, Streamdown, react-router v7, Zod      |
 | Backend  | Node.js 24, TypeScript, [Hono](https://hono.dev) (HTTP + WebSocket via `@hono/node-server`/`@hono/node-ws` + `ws`), Zod validation, bcryptjs, JWT |
-| Database | PostgreSQL via Prisma 7 (`@prisma/adapter-pg`)                                                                                                    |
+| Database | PostgreSQL (default) or SQLite via Prisma 7 driver adapters (`@prisma/adapter-pg` / `@prisma/adapter-better-sqlite3`)                          |
 | Cache    | Redis via ioredis — read-through cache for user info & session lists, degrades to the DB on Redis errors (in-memory store in tests)               |
 | Agent    | [`@yukino.js/yukino`](https://github.com/hangtiancheng/yukino-code) embedded in the chat server (`AgentManager` / per-user `AgentRuntime`)        |
 | Tooling  | pnpm workspaces, ESLint (client), Biome (server), Vitest + node smoke scripts (server), Prettier                                                  |
@@ -132,7 +132,8 @@ agent workspace, streamed live into the conversation.
 ### Prerequisites
 
 - **Node.js ≥ 24** (see `.nvmrc`) and **pnpm**
-- **PostgreSQL** — a reachable instance (`DATABASE_URL`)
+- **PostgreSQL** — required when `DATABASE_PROVIDER=pg` (default); a reachable instance (`DATABASE_URL`)
+- **SQLite** — no external service when `DATABASE_PROVIDER=sqlite`; the database is a local file
 - **Redis** — a reachable instance (`REDIS_URL`)
 
 ### Local development
@@ -146,6 +147,10 @@ cd server
 pnpm db:migrate                           # prisma migrate dev
 pnpm dev                                  # tsx watch → listens on :8000
 
+# SQLite mode (DATABASE_PROVIDER=sqlite in server/.env)
+pnpm db:migrate                           # creates prisma-sqlite/dev.db from prisma-sqlite/migrations
+pnpm dev
+
 # 2. Frontend — from the repo root
 cp client/.env.example client/.env        # VITE_API_URL=http://localhost:8000
 pnpm --filter client dev                  # Vite dev server
@@ -158,7 +163,8 @@ pnpm --filter client dev                  # Vite dev server
 | Variable                                                     | Default                                             | Description                                             |
 | ------------------------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------- |
 | `PORT` / `HOST`                                              | `8000` / `0.0.0.0`                                  | Listen address                                          |
-| `DATABASE_URL`                                               | `postgresql://root:pass@localhost:5432/yukino_chat` | PostgreSQL connection string                            |
+| `DATABASE_PROVIDER`                                          | `pg`                                                | Database backend: `pg` (PostgreSQL) or `sqlite`         |
+| `DATABASE_URL`                                               | provider-dependent                                  | PostgreSQL connection string for `pg`; `file:` URL for `sqlite` (default `file:./prisma-sqlite/dev.db`) |
 | `REDIS_URL`                                                  | `redis://localhost:6379`                            | Cache backend; empty string → in-memory (tests)         |
 | `JWT_SECRET`                                                 | `yukino-chat-jwt-secret`                            | JWT signing secret — change in production               |
 | `TOKEN_EXPIRE_HOURS`                                         | `336`                                               | Login token lifetime (14 days)                          |
@@ -235,7 +241,8 @@ yukino-chat/
 │   │   ├── cache/             # Redis read-through cache (+ in-memory fallback)
 │   │   ├── database/          # Prisma client
 │   │   └── config/            # Zod-validated environment
-│   ├── prisma/                # schema.prisma + migrations (PostgreSQL)
+│   ├── prisma/                # PostgreSQL schema + migrations
+│   ├── prisma-sqlite/         # SQLite schema + migrations
 │   └── tests/                 # Vitest units + http/ws smoke scripts
 └── scripts/                   # repo utilities (bulk rename)
 ```
@@ -251,7 +258,9 @@ docker compose up --build   # postgres + redis + app on http://localhost:8000
 ```
 
 - The container entrypoint runs `prisma migrate deploy` before starting the
-  server.
+  server. It uses `DATABASE_PROVIDER` to pick `prisma/schema.prisma` +
+  `prisma/migrations` (`pg`) or `prisma-sqlite/schema.prisma` +
+  `prisma-sqlite/migrations` (`sqlite`).
 - `VITE_API_URL` is baked into the frontend at build time (default
   `http://localhost:8000`); pass a build arg when the browser reaches the
   server through another origin.
@@ -279,7 +288,8 @@ docker compose up --build   # postgres + redis + app on http://localhost:8000
   degrades to a DB miss instead of failing; with `REDIS_URL=""` the cache runs
   fully in memory (intended for tests).
 - **Run migrations before booting a new version**: `pnpm db:deploy`
-  (`prisma migrate deploy`).
+  (`prisma migrate deploy`). `DATABASE_PROVIDER` selects the schema and
+  migration directory, so it must match the database in use.
 - **The agent needs a provider** (`~/.yukino/config.yaml` or `YUKINO_AI_*`
   env) — without one the server runs fine but the assistant is unavailable.
 
@@ -306,13 +316,14 @@ Backend (`server/`):
 
 ```bash
 pnpm dev          # tsx watch src/index.ts (hot reload)
-pnpm build        # prisma generate && tsc -p tsconfig.build.json
+pnpm build        # generates both Prisma clients, then tsc -p tsconfig.build.json
 pnpm start        # node dist/index.js
 pnpm test         # vitest run
 pnpm typecheck    # tsc -b --noEmit
 pnpm lint         # biome check .
-pnpm db:migrate   # prisma migrate dev (local development)
-pnpm db:deploy    # prisma migrate deploy (production)
+pnpm db:migrate   # prisma migrate dev for DATABASE_PROVIDER (local development)
+pnpm db:deploy    # prisma migrate deploy for DATABASE_PROVIDER (production)
+pnpm prisma:generate  # regenerate PostgreSQL + SQLite clients
 ```
 
 Server smoke tests run against a live server:

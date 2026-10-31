@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "prisma generate && tsc -p tsconfig.build.json",
+    "build": "pnpm prisma:generate && tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
     "format": "biome format --write",
     "test": "vitest run",
@@ -15,12 +15,13 @@
     "lint:fix": "biome check --write",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "prisma generate --schema prisma/schema.prisma && prisma generate --schema prisma-sqlite/schema.prisma"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.17",
     "@hono/node-ws": "^1.3.1",
     "@hono/zod-validator": "^0.7.6",
+    "@prisma/adapter-better-sqlite3": "^7.10.1",
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
     "@yukino.js/yukino": "0.0.20",

@@ -36,6 +36,7 @@ services:
       redis:
         condition: service_healthy
     environment:
+      DATABASE_PROVIDER: ${DATABASE_PROVIDER:-pg}
       DATABASE_URL: postgresql://yukino:yukino@postgres:5432/yukino_chat
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-yukino-chat-jwt-secret}

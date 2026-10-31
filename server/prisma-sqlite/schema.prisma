@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma-sqlite"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model UserInfo {
+  id            Int       @id @default(autoincrement())
+  uuid          String    @unique
+  telephone     String
+  nickname      String    @default("")
+  email         String    @default("")
+  avatar        String    @default("")
+  gender        Int       @default(0)
+  signature     String    @default("")
+  password      String    @default("")
+  birthday      String    @default("")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  lastOnlineAt  DateTime? @map("last_online_at")
+  lastOfflineAt DateTime? @map("last_offline_at")
+  isAdmin       Int       @default(0) @map("is_admin")
+  status        Int       @default(0)
+
+  @@index([telephone], map: "idx_user_info_telephone")
+  @@map("user_info")
+}
+
+model Session {
+  id            Int       @id @default(autoincrement())
+  uuid          String    @unique
+  sendId        String    @map("send_id")
+  receiveId     String    @map("receive_id")
+  receiveName   String    @default("") @map("receive_name")
+  avatar        String    @default("")
+  lastMessage   String    @default("") @map("last_message")
+  lastMessageAt DateTime? @map("last_message_at")
+  lastReadAt    DateTime? @map("last_read_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  @@index([sendId, receiveId], map: "idx_session_send_receive")
+  @@index([receiveId], map: "idx_session_receive")
+  @@map("session")
+}
+
+model Message {
+  id         Int       @id @default(autoincrement())
+  uuid       String    @unique
+  sessionId  String    @map("session_id")
+  type       Int
+  content    String    @default("")
+  url        String    @default("")
+  sendId     String    @map("send_id")
+  sendName   String    @default("") @map("send_name")
+  sendAvatar String    @default("") @map("send_avatar")
+  receiveId  String    @map("receive_id")
+  fileType   String    @default("") @map("file_type")
+  fileName   String    @default("") @map("file_name")
+  fileSize   String    @default("") @map("file_size")
+  status     Int       @default(0)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  sendAt     DateTime? @map("send_at")
+  avData     String    @default("") @map("av_data")
+
+  @@index([sendId, receiveId, createdAt], map: "idx_message_send_receive_created")
+  @@index([receiveId, createdAt], map: "idx_message_receive_created")
+  @@map("message")
+}
+
+model GroupInfo {
+  id        Int       @id @default(autoincrement())
+  uuid      String    @unique
+  name      String
+  notice    String    @default("")
+  members   Json      @default(dbgenerated("'[]'"))
+  memberCnt Int       @default(0) @map("member_cnt")
+  ownerId   String    @map("owner_id")
+  addMode   Int       @default(0) @map("add_mode")
+  avatar    String    @default("")
+  status    Int       @default(0)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@index([ownerId], map: "idx_group_info_owner")
+  @@map("group_info")
+}
+
+model UserContact {
+  id          Int       @id @default(autoincrement())
+  userId      String    @map("user_id")
+  contactId   String    @map("contact_id")
+  contactType Int       @default(0) @map("contact_type")
+  status      Int       @default(0)
+  noteName    String    @default("") @map("note_name")
+  tagId       String    @default("") @map("tag_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  @@index([userId, contactId], map: "idx_user_contact_pair")
+  @@index([contactId], map: "idx_user_contact_contact")
+  @@map("user_contact")
+}
+
+model ContactApply {
+  id          Int       @id @default(autoincrement())
+  uuid        String    @unique
+  userId      String    @map("user_id")
+  contactId   String    @map("contact_id")
+  contactType Int       @default(0) @map("contact_type")
+  status      Int       @default(0)
+  message     String    @default("")
+  lastApplyAt DateTime  @default(now()) @map("last_apply_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  @@index([contactId, status], map: "idx_contact_apply_contact_status")
+  @@index([userId, contactId], map: "idx_contact_apply_pair")
+  @@map("contact_apply")
+}
+
+model ContactTag {
+  id        Int       @id @default(autoincrement())
+  uuid      String    @unique
+  userId    String    @map("user_id")
+  name      String
+  createdAt DateTime  @default(now()) @map("created_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@index([userId], map: "idx_contact_tag_user")
+  @@map("contact_tag")
+}
+
+enum AgentSessionStatus {
+  IDLE
+  RUNNING
+  WAITING
+  COMPLETED
+  ABORTED
+  FAILED
+}
+
+model AgentSession {
+  id             String             @id @default(uuid())
+  userId         String             @unique @map("user_id")
+  status         AgentSessionStatus @default(IDLE)
+  context        Json               @default(dbgenerated("'{}'"))
+  activeSkills   Json               @default(dbgenerated("'[]'")) @map("active_skills")
+  permissionMode String             @default("default") @map("permission_mode")
+  createTime     DateTime           @default(now()) @map("create_time")
+  updateTime     DateTime           @updatedAt @map("update_time")
+  lastActiveTime DateTime           @default(now()) @map("last_active_time")
+  completedTime  DateTime?          @map("completed_time")
+
+  @@index([userId, updateTime], map: "idx_agent_sessions_user_update")
+  @@map("agent_sessions")
+}

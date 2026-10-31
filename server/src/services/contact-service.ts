@@ -592,7 +592,7 @@ export async function addGroupMember(
   await db.groupInfo.update({
     where: { uuid: groupId },
     data: {
-      members: { push: userId },
+      members: [...group.members, userId],
       memberCnt: { increment: 1 },
       updatedAt: new Date(),
     },
