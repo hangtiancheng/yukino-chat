@@ -62,7 +62,6 @@ export interface QuestionRequestParams {
   id: string;
   questions: {
     question: string;
-    header: string;
     options: { label: string; description?: string }[];
     multiSelect: boolean;
   }[];

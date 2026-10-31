@@ -1,6 +1,9 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { createNodeWebSocket } from "@hono/node-ws";
 import { Hono } from "hono";
+import { env } from "./config/env.js";
 import type { Deps } from "./deps.js";
 import type { AppEnv } from "./hono-env.js";
 import { authMiddleware } from "./middleware/auth.js";
@@ -50,6 +53,23 @@ export function createApp(deps: Deps) {
   registerWsChatRoute(app, deps, upgradeWebSocket);
   registerAgentWsRoute(app, deps, upgradeWebSocket);
   registerWsDashboardRoute(app, deps, upgradeWebSocket);
+
+  if (existsSync(join(env.WEB_DIST_DIR, "index.html"))) {
+    app.use("/assets/*", async (c, next) => {
+      await next();
+      if (c.res.status === 200 || c.res.status === 206) {
+        c.res.headers.set("Cache-Control", "public, max-age=604800, immutable");
+      }
+    });
+    app.use("/sw.js", async (c, next) => {
+      await next();
+      if (c.res.status === 200) {
+        c.res.headers.set("Cache-Control", "no-cache");
+      }
+    });
+    app.get("*", serveStatic({ root: env.WEB_DIST_DIR }));
+    app.get("*", serveStatic({ root: env.WEB_DIST_DIR, path: "index.html" }));
+  }
 
   return { app, injectWebSocket };
 }

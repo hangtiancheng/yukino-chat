@@ -1,0 +1,19 @@
+permission_mode: bypassPermissions
+default_provider: 0
+providers:
+  - name: ds-openai
+    protocol: openai
+    base_url: https://api.deepseek.com
+    model: "deepseek-flash"
+    api_key: "sk-REPLACE-ME"
+    thinking: low
+    context_window: 1000000
+    max_output_tokens: 128000
+  - name: ds-anthropic
+    protocol: anthropic
+    base_url: https://api.deepseek.com/anthropic
+    model: "deepseek-flash"
+    api_key: "sk-REPLACE-ME"
+    thinking: low
+    context_window: 1000000
+    max_output_tokens: 12800

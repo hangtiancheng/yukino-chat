@@ -25,8 +25,8 @@ import { basename, dirname, isAbsolute, join, relative, resolve } from "node:pat
 
 import { type Tools, Utils } from "@yukino.js/yukino";
 
-type Tool = Tools.Types.Tool;
-type ToolResult = Tools.Types.ToolResult;
+type Tool = Tools.Tool;
+type ToolResult = Tools.ToolResult;
 type ToolRegistry = Tools.Registry.ToolRegistry;
 
 /**

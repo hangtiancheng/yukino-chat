@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: yukino
+      POSTGRES_PASSWORD: yukino
+      POSTGRES_DB: yukino_chat
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U yukino -d yukino_chat"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  app:
+    build:
+      context: .
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+        VITE_WS_URL: ${VITE_WS_URL:-}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://yukino:yukino@postgres:5432/yukino_chat
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-yukino-chat-jwt-secret}
+      YUKINO_AI_PROTOCOL: ${YUKINO_AI_PROTOCOL:-}
+      YUKINO_AI_BASE_URL: ${YUKINO_AI_BASE_URL:-}
+      YUKINO_AI_API_KEY: ${YUKINO_AI_API_KEY:-}
+      YUKINO_AI_MODEL: ${YUKINO_AI_MODEL:-}
+    ports:
+      - "8000:8000"
+    volumes:
+      - app-static:/app/server/static
+
+volumes:
+  postgres-data:
+  app-static:

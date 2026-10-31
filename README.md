@@ -240,9 +240,24 @@ yukino-chat/
 └── scripts/                   # repo utilities (bulk rename)
 ```
 
-> `client/Dockerfile`, `client/docker-compose.yml` and `client/docker/` are
-> leftovers from the previous Go + MongoDB layout and have not been updated
-> for the TypeScript backend yet.
+## Docker
+
+The root `Dockerfile` builds a single image that serves frontend and backend
+together: the Vite build output is copied into the server image and served by
+Hono with SPA fallback, so one container exposes everything on port 8000.
+
+```bash
+docker compose up --build   # postgres + redis + app on http://localhost:8000
+```
+
+- The container entrypoint runs `prisma migrate deploy` before starting the
+  server.
+- `VITE_API_URL` is baked into the frontend at build time (default
+  `http://localhost:8000`); pass a build arg when the browser reaches the
+  server through another origin.
+- Uploads live in `/app/server/static` (a named volume in compose).
+- `docker/nginx.conf` and `docker/config.docker.json` are leftovers from the
+  previous Go + MongoDB layout and are no longer used by the image.
 
 ## Deployment Constraints
 
@@ -291,7 +306,7 @@ Backend (`server/`):
 
 ```bash
 pnpm dev          # tsx watch src/index.ts (hot reload)
-pnpm build        # prisma generate && tsc
+pnpm build        # prisma generate && tsc -p tsconfig.build.json
 pnpm start        # node dist/index.js
 pnpm test         # vitest run
 pnpm typecheck    # tsc -b --noEmit

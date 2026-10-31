@@ -14,8 +14,8 @@ import {
   patternEscapes,
 } from "../src/agent/read-only-tools.js";
 
-type Tool = Tools.Types.Tool;
-type ToolResult = Tools.Types.ToolResult;
+type Tool = Tools.Tool;
+type ToolResult = Tools.ToolResult;
 
 function fakeTool(name: string, result: ToolResult): Tool & { calls: Record<string, unknown>[] } {
   const calls: Record<string, unknown>[] = [];

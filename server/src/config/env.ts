@@ -12,6 +12,7 @@ const envSchema = z.object({
   STATIC_AVATAR_DIR: z.string().default("./static/avatars"),
   STATIC_FILE_DIR: z.string().default("./static/files"),
   STATIC_CHUNK_DIR: z.string().default("./static/chunks"),
+  WEB_DIST_DIR: z.string().default("./web"),
   AGENT_WS_MAX_MESSAGE_BYTES: z.coerce.number().default(4 * 1024 * 1024),
   AGENT_IDLE_MS: z.coerce.number().default(30 * 60 * 1000),
   AGENT_QUEUE_CAP: z.coerce.number().default(8),

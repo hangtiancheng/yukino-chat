@@ -36,7 +36,7 @@ describe("interaction broker", () => {
     const broker = new InteractionBroker();
     const promise = broker.requestAnswers({
       id: "ask_1",
-      questions: [{ question: "q", header: "h", options: [], multiSelect: false }],
+      questions: [{ question: "q", options: [], multiSelect: false }],
     });
     const attempt = vi.advanceTimersByTimeAsync(5 * 60 * 1000);
     await expect(promise).rejects.toThrow("question timed out");
@@ -100,7 +100,7 @@ describe("interaction broker", () => {
     const answers = broker
       .requestAnswers({
         id: "ask_2",
-        questions: [{ question: "q", header: "h", options: [], multiSelect: false }],
+        questions: [{ question: "q", options: [], multiSelect: false }],
       })
       .catch(() => ({}));
     const snap = broker.snapshot();
