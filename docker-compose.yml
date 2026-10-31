@@ -37,7 +37,11 @@ services:
         condition: service_healthy
     environment:
       DATABASE_PROVIDER: ${DATABASE_PROVIDER:-pg}
-      DATABASE_URL: postgresql://yukino:yukino@postgres:5432/yukino_chat
+      # pg (default): point at the postgres service. sqlite: set
+      # DATABASE_PROVIDER=sqlite and DATABASE_URL=file:/app/data/yukino-chat.db
+      # (the app-data volume below persists it; keep it OUT of prisma-sqlite/
+      # so the baked-in migrations directory is not shadowed).
+      DATABASE_URL: ${DATABASE_URL:-postgresql://yukino:yukino@postgres:5432/yukino_chat}
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-yukino-chat-jwt-secret}
       YUKINO_AI_PROTOCOL: ${YUKINO_AI_PROTOCOL:-}
@@ -48,7 +52,11 @@ services:
       - "8000:8000"
     volumes:
       - app-static:/app/server/static
+      - app-data:/app/data
+      # Optional: mount a Yukino config.yaml instead of the YUKINO_AI_* env vars.
+      # - ./docker/yukino.config.yaml:/root/.yukino/config.yaml:ro
 
 volumes:
   postgres-data:
   app-static:
+  app-data:

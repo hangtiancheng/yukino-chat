@@ -32,7 +32,10 @@ RUN pnpm install --frozen-lockfile --prod --filter server...
 
 FROM node:24-alpine AS app
 WORKDIR /app/server
-RUN apk add --no-cache tzdata && npm install -g prisma@7
+# prisma is a runtime dependency now (the entrypoint runs `prisma migrate
+# deploy`, and prisma.config.ts imports `prisma/config`), so it ships inside
+# the copied node_modules — no separate global install is needed.
+RUN apk add --no-cache tzdata
 COPY --from=prod-deps /app/node_modules /app/node_modules
 COPY --from=prod-deps /app/server/node_modules ./node_modules
 COPY --from=prod-deps /app/server/package.json ./package.json

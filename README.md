@@ -85,7 +85,7 @@ agent workspace, streamed live into the conversation.
   until the interaction timeout. Degraded events (failed tools, retries,
   compaction, agent errors) are logged server-side as JSONL keyed by user.
 - **Read-only tool policy for the multi-user host**: the agent only sees
-  Yukino's read tools (`ReadFile`/`Glob`/`Grep`/`WebFetch`, task board,
+  Yukino's read tools (`ReadFile`/`Glob`/`Grep`/`WebFetch`/`LSP`, task board,
   `LoadSkill`, `AskUserQuestion`, MCP dispatch). Write/command tools (Bash,
   `EditFile`, `WriteFile`, worktree, teams, subagent spawning) are filtered
   out of both the advertised schemas and execution. Path reads are contained
@@ -103,7 +103,8 @@ agent workspace, streamed live into the conversation.
   are written back into the chat transcript as ordinary messages so they
   survive reloads and show up in session previews.
 - Conversation context (messages, active skills, permission mode) is persisted
-  in PostgreSQL (`agent_sessions`) and rehydrated across server restarts.
+  in the `agent_sessions` table (PostgreSQL or SQLite, per `DATABASE_PROVIDER`)
+  and rehydrated across server restarts.
 - Slash-command menu, permission gating and interactive question prompts in the
   composer.
 

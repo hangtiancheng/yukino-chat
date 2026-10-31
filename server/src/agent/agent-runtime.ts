@@ -129,6 +129,8 @@ export class AgentRuntime {
         cwd: this.workDir,
         mcpServers: this.config.mcpServers,
         hooks: this.config.hooks,
+        lspServers: this.config.lspServers,
+        memoryEnabled: this.config.memoryEnabled,
         enableCoordinatorMode: false,
         forkDisabled: false,
         askUser: (questions) => this.askUser(questions),
@@ -178,7 +180,12 @@ export class AgentRuntime {
   }
 
   private async rehydrate(handle: Handle) {
-    handle.conv.reset();
+    // Do NOT reset the conversation here: createRemoteAgent already seeded it
+    // with the long-term memory reminder (project instructions + auto memory).
+    // A reset would silently drop that injection on every runtime start, so the
+    // agent would run without its instructions/memories. We only append the
+    // persisted history, filtering stale system-reminder wrappers — the reminder
+    // createRemoteAgent injected stays at the head and supersedes them.
     const { messages, activeSkills } = await this.stores.loadContext(this.sessionId);
     const restored = messages.filter((m) => !isWrappedSystemReminder(m));
     if (restored.length > 0) {
@@ -398,10 +405,7 @@ export class AgentRuntime {
     }
     if (!this.isChatCommand(cmd)) {
       this.notifyAll("agent/system", {
-        message:
-          name === "plan"
-            ? "Yukino is read-only in chat — plan mode is always in effect, so /plan is not needed."
-            : `/${name} is not available in chat. Type /help to see available commands.`,
+        message: `/${name} is not available in chat. Type /help to see available commands.`,
       });
       return;
     }

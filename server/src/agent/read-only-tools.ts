@@ -34,25 +34,38 @@ type ToolResult = Tools.ToolResult;
 type ToolRegistry = Tools.Registry.ToolRegistry;
 
 /**
- * Tools the chat agent may use: read-category tools plus the per-session
- * internal state tools (task board, goal) and interaction tools. MCP tools
- * (mcp__*) pass the filter too — their invocations stay gated by the
- * permission broker because MCPToolWrapper reports category "command".
+ * Tools the chat agent may use. This mirrors every read-category tool that
+ * library mode registers (createToolRegistry + createRemoteAgent), plus the
+ * per-session internal-state tools (task board, goal) and the MCP gateway.
+ *
+ * Deliberately excluded even though the library tags them "read":
+ *   - EnterPlanMode / ExitPlanMode — they flip permissionMode, which would let
+ *     the model escape the always-read-only chat invariant.
+ *   - TeamList — team orchestration is disabled (enableCoordinatorMode: false),
+ *     so it can only ever return an empty list.
+ *
+ * McpCall reports category "command" but is the only way to invoke MCP tools,
+ * so it is kept; MCP invocations stay gated by the permission broker. MCP tools
+ * (mcp__*) pass the filter through the prefix rule below.
  */
 const READ_ONLY_TOOLS: ReadonlySet<string> = new Set([
+  // File / code inspection (path-contained by containReadTools).
   "ReadFile",
   "Glob",
   "Grep",
+  // Network read (public-address guarded by containReadTools).
   "WebFetch",
+  // Tool discovery + the gateway that actually invokes MCP tools.
   "ToolSearch",
   "McpCall",
+  // Skills (re-registered with a read-only fork host in applyReadOnlyPolicy).
   "LoadSkill",
+  // Interaction and structured output.
   "AskUserQuestion",
   "SyntheticOutput",
-  "TaskCreate",
-  "TaskGet",
-  "TaskList",
-  "TaskUpdate",
+  // Read-only code intelligence; servers come from config `lsp_servers`.
+  "LSP",
+  // Per-session internal state — no filesystem mutation.
   "TodoWrite",
   "TaskOutput",
   "Goal",

@@ -62,8 +62,10 @@ describe("read-only tool filter", () => {
       "McpCall",
       "LoadSkill",
       "AskUserQuestion",
-      "TaskCreate",
+      "SyntheticOutput",
+      "LSP",
       "TodoWrite",
+      "TaskOutput",
       "Goal",
       "mcp__server__tool",
     ]) {
@@ -88,7 +90,9 @@ describe("read-only tool filter", () => {
       "TeamDelete",
       "SendMessage",
       "TaskStop",
-      "LSP",
+      "Workflow",
+      "InstallSkill",
+      "TeamList",
     ]) {
       expect(filter(name), name).toBe(false);
     }
