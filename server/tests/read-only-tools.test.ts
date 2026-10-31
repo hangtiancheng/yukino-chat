@@ -6,6 +6,7 @@ import { Tools } from "@yukino.js/yukino";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  assertPublicHttpUrl,
   containedPath,
   containReadTools,
   createReadOnlyToolFilter,
@@ -229,11 +230,32 @@ describe("containReadTools", () => {
   it("allows WebFetch to public addresses", async () => {
     const root = makeRoot();
     const { registry, webFetch } = makeRegistry(root);
-    // IP literal — assertPublicHttpUrl does not hit the network for literals.
+    // IP literal — the guard resolves no hostname for literals.
     const result = await registry
       .get("WebFetch")
       ?.execute(ctx(root), { url: "http://93.184.216.34/" });
     expect(result).toEqual({ output: "page", isError: false });
     expect(webFetch.calls).toHaveLength(1);
+  });
+});
+
+describe("assertPublicHttpUrl", () => {
+  it("accepts public IP literals", async () => {
+    await expect(assertPublicHttpUrl("https://93.184.216.34/path")).resolves.toBeUndefined();
+  });
+
+  it("rejects non-http protocols and embedded credentials", async () => {
+    await expect(assertPublicHttpUrl("file:///etc/passwd")).rejects.toThrow(
+      /unsupported protocol/u,
+    );
+    await expect(assertPublicHttpUrl("http://user:pass@93.184.216.34/")).rejects.toThrow(
+      /must not contain credentials/u,
+    );
+  });
+
+  it("rejects hostnames that resolve to a non-public address", async () => {
+    await expect(assertPublicHttpUrl("http://localhost:8080/")).rejects.toThrow(
+      /non-public network address/u,
+    );
   });
 });

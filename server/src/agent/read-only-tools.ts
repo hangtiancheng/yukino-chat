@@ -13,13 +13,17 @@
  *   only resolve paths inside the user's own workspace. Yukino's permission
  *   layer path-sandboxes writes only, so without this a ReadFile call could
  *   reach another user's workspace or host files (~/.yukino/config.yaml).
- * - WebFetch is guarded by yukino's own public-URL assertion (blocks loopback,
- *   private, link-local and reserved ranges, including DNS-resolved ones).
+ * - WebFetch is guarded by a public-address check (blocks loopback, private,
+ *   link-local and reserved ranges, including DNS-resolved ones). Yukino 0.0.20
+ *   ships an unvalidated WebFetch and no longer exports assertPublicHttpUrl,
+ *   so the check is built from its isPublicIpAddress plus a DNS lookup.
  * - FORK_DISALLOWED_TOOLS strips the same write/command tools from fork-mode
  *   skill subagents, so delegation is not a write escape hatch. Subagents
  *   reuse the wrapped registry, inheriting the path containment.
  */
+import { lookup } from "node:dns/promises";
 import { realpathSync } from "node:fs";
+import { isIP } from "node:net";
 import { homedir } from "node:os";
 import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
 
@@ -158,6 +162,34 @@ const PATTERN_ARGS: Record<string, readonly string[]> = {
   Glob: ["pattern"],
 };
 
+/* ------------------------------- public URL guard ------------------------------- */
+
+function unbracketedHostname(url: URL): string {
+  const { hostname } = url;
+  return hostname.startsWith("[") && hostname.endsWith("]") ? hostname.slice(1, -1) : hostname;
+}
+
+/** Rejects URLs that are not http(s) or that resolve to any non-public address. */
+export async function assertPublicHttpUrl(input: string): Promise<void> {
+  const url = new URL(input);
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new Error(`unsupported protocol "${url.protocol}"`);
+  }
+  if (url.username || url.password) {
+    throw new Error("URL must not contain credentials");
+  }
+  const hostname = unbracketedHostname(url);
+  const addresses = isIP(hostname)
+    ? [hostname]
+    : (await lookup(hostname, { all: true, order: "verbatim" })).map((entry) => entry.address);
+  if (
+    addresses.length === 0 ||
+    addresses.some((address) => !Utils.PublicHttp.isPublicIpAddress(address))
+  ) {
+    throw new Error("URL resolves to a non-public network address");
+  }
+}
+
 function denyOutsideWorkspace(toolName: string, value: string): ToolResult {
   return {
     output:
@@ -204,7 +236,7 @@ export function containReadTools(registry: ToolRegistry, root: string): void {
         const url = args.url;
         if (typeof url !== "string" || url === "") return null;
         try {
-          await Utils.PublicHttp.assertPublicHttpUrl(url);
+          await assertPublicHttpUrl(url);
           return null;
         } catch (err) {
           return {

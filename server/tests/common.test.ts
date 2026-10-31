@@ -56,7 +56,10 @@ describe("sanitizeFilename", () => {
   it("strips path traversal like Go's filepath.Base", () => {
     expect(sanitizeFilename("../../etc/passwd")).toBe("passwd");
     expect(sanitizeFilename("/abs/path/photo.png")).toBe("photo.png");
-    expect(sanitizeFilename("C:\\evil\\path.txt")).toBe("C__evil_path.txt");
+    // path.basename splits on the host separator, as Go's filepath.Base does.
+    expect(sanitizeFilename("C:\\evil\\path.txt")).toBe(
+      process.platform === "win32" ? "path.txt" : "C__evil_path.txt",
+    );
   });
 
   it("keeps safe characters", () => {
