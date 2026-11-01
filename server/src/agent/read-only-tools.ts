@@ -43,6 +43,8 @@ type ToolRegistry = Tools.Registry.ToolRegistry;
  *     the model escape the always-read-only chat invariant.
  *   - TeamList — team orchestration is disabled (enableCoordinatorMode: false),
  *     so it can only ever return an empty list.
+ *   - LSP — language-server integration is intentionally not wired into the
+ *     chat host (no `lsp_servers` are ever configured).
  *
  * McpCall reports category "command" but is the only way to invoke MCP tools,
  * so it is kept; MCP invocations stay gated by the permission broker. MCP tools
@@ -63,8 +65,6 @@ const READ_ONLY_TOOLS: ReadonlySet<string> = new Set([
   // Interaction and structured output.
   "AskUserQuestion",
   "SyntheticOutput",
-  // Read-only code intelligence; servers come from config `lsp_servers`.
-  "LSP",
   // Per-session internal state — no filesystem mutation.
   "TodoWrite",
   "TaskOutput",

@@ -56,8 +56,6 @@ function fetchPriorityHints(): Plugin {
   };
 }
 
-const isProd = process.env.NODE_ENV === "production";
-
 export default defineConfig({
   publicDir: resolve(import.meta.dirname, "public"),
   plugins: [
@@ -80,8 +78,8 @@ export default defineConfig({
         theme_color: "#f05138",
         background_color: "#f05138",
         display: "standalone",
-        scope: isProd ? "/yukino-chat/" : "/",
-        start_url: isProd ? "/yukino-chat/" : "/",
+        scope: "/",
+        start_url: "/",
         icons: [
           {
             src: "pwa-64x64.png",

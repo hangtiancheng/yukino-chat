@@ -25,7 +25,6 @@ function makeRuntime(): AgentRuntime {
       },
       mcpServers: [],
       hooks: [],
-      lspServers: [],
       memoryEnabled: true,
       permissionMode: "default",
     },

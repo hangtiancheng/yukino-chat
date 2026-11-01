@@ -17,7 +17,7 @@ import { env } from "../config/env.js";
 import type { Deps } from "../deps.js";
 import type { AppEnv } from "../hono-env.js";
 
-const MAX_MESSAGE_BYTES = 4 * 1024 * 1024;
+const MAX_MESSAGE_BYTES = env.AGENT_WS_MAX_MESSAGE_BYTES;
 
 interface IncomingRpc {
   jsonrpc: unknown;

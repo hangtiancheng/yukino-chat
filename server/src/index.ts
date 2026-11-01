@@ -5,7 +5,12 @@ import { env } from "./config/env.js";
 import { createDeps, shutdownDeps } from "./deps.js";
 
 async function main() {
-  for (const dir of [env.STATIC_AVATAR_DIR, env.STATIC_FILE_DIR, env.STATIC_CHUNK_DIR]) {
+  for (const dir of [
+    env.STATIC_AVATAR_DIR,
+    env.STATIC_FILE_DIR,
+    env.STATIC_CHUNK_DIR,
+    env.SENTRY_LOG_DIR,
+  ]) {
     mkdirSync(dir, { recursive: true });
   }
 

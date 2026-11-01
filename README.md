@@ -30,17 +30,21 @@ first-class chat participant. Every signed-in user gets their own isolated
 agent workspace, streamed live into the conversation.
 
 ```
-┌──────────────┐     HTTP + WS      ┌─────────────────────────┐     ┌────────────┐
-│   Web (SPA)  │ ─────────────────> │   Chat Server (Node)    │ ──> │ PostgreSQL │
-│  React 19    │                    │   Hono + Prisma + ws    │ ──> │ Redis      │
-└──────┬───────┘                    └────────────┬────────────┘     └────────────┘
-       │ /agent/ws                               │ embeds (in-process)
-       V                               ┌─────────V─────────────┐
-┌──────────────┐                       │     AgentManager      │
-│  Agent UI    │ <───────────────────> │ 1 @yukino.js runtime  │
-│  streaming   │      JSON-RPC 2.0     │      per user         │
-└──────────────┘                       └───────────────────────┘
+┌──────────────┐  static SPA   ┌──────────────┐  /api/* proxy  ┌─────────────────────────┐     ┌────────────┐
+│   Browser    │ ────────────> │    Nginx     │ ─────────────> │   Chat Server (Node)    │ ──> │ PostgreSQL │
+│  React 19    │ <──────────── │  edge (TLS)  │ <───────────── │   Hono + Prisma + ws    │ ──> │ Redis      │
+└──────┬───────┘   index.html  └──────────────┘   HTTP + WS    └────────────┬────────────┘     └────────────
+       │ /api/agent/ws                                                      │ embeds (in-process)
+       V                                                          ┌──────────V────────────┐
+┌──────────────┐                                                  │     AgentManager      │
+│  Agent UI    │ <──────────────────────────────────────────────> │ 1 @yukino.js runtime  │
+│  streaming   │                    JSON-RPC 2.0                  │      per user         │
+└──────────────┘                                                  └───────────────────────┘
 ```
+
+The frontend and backend are fully separated: Nginx serves the built SPA and
+reverse-proxies every `/api/*` path (HTTP, WebSocket, uploads) to the Node
+server, which exposes **only** the API — it never serves frontend files.
 
 ## Features
 
@@ -85,14 +89,14 @@ agent workspace, streamed live into the conversation.
   until the interaction timeout. Degraded events (failed tools, retries,
   compaction, agent errors) are logged server-side as JSONL keyed by user.
 - **Read-only tool policy for the multi-user host**: the agent only sees
-  Yukino's read tools (`ReadFile`/`Glob`/`Grep`/`WebFetch`/`LSP`, task board,
+  Yukino's read tools (`ReadFile`/`Glob`/`Grep`/`WebFetch`, task board,
   `LoadSkill`, `AskUserQuestion`, MCP dispatch). Write/command tools (Bash,
   `EditFile`, `WriteFile`, worktree, teams, subagent spawning) are filtered
   out of both the advertised schemas and execution. Path reads are contained
   to the user's own workspace (symlink-aware), `WebFetch` is guarded by
   Yukino's public-URL assertion (no loopback/private/SSRF targets), and
   fork-mode skills run in read-only subagents — delegation is not a write
-  escape hatch.
+  escape hatch. LSP integration is deliberately not wired up.
 - **Slash commands & skills** wired from the Yukino command registry:
   `/help`, `/status`, `/clear`, `/compact`, `/skills`, `/goal`, user commands
   (`~/.yukino/prompts`) and skills (`~/.yukino/skills`, `~/.agents/skills`)
@@ -171,6 +175,7 @@ pnpm --filter client dev                  # Vite dev server
 | `TOKEN_EXPIRE_HOURS`                                         | `336`                                               | Login token lifetime (14 days)                          |
 | `CACHE_TTL_SECONDS`                                          | `300`                                               | Read-through cache entry TTL                            |
 | `STATIC_AVATAR_DIR` / `STATIC_FILE_DIR` / `STATIC_CHUNK_DIR` | `./static/…`                                        | Upload directories (created on boot)                    |
+| `SENTRY_LOG_DIR`                                             | `./logs`                                            | Frontend telemetry ingest dir (`POST /log`, JSONL)      |
 | `AGENT_WS_MAX_MESSAGE_BYTES`                                 | `4194304`                                           | Max inbound frame size on `/agent/ws`                   |
 | `AGENT_IDLE_MS`                                              | `1800000`                                           | Idle eviction for per-user agent runtimes (30 min)      |
 | `AGENT_QUEUE_CAP`                                            | `8`                                                 | Prompt queue capacity per agent                         |
@@ -188,16 +193,18 @@ reports itself unavailable.
 
 | Variable       | Description                                                                                                                                  |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VITE_API_URL` | Origin of the backend (default `http://localhost:8000`)                                                                                      |
-| `VITE_WS_URL`  | Optional. Defaults to `VITE_API_URL` with the scheme swapped to `ws`. Set only when the WebSocket endpoint is proxied to a different origin. |
+| `VITE_API_URL` | Absolute backend origin (default `http://localhost:8000`, dev) or a same-origin path prefix (`/api`, behind Nginx in production)             |
+| `VITE_WS_URL`  | Optional absolute `ws(s)://` override. Defaults to `VITE_API_URL` with the scheme swapped, or — for a relative prefix — the current page origin. |
 
 ## API Surface
 
 All endpoints are `POST` unless noted. Every route except `/login`,
-`/register` and `/user/update-password` requires a JWT in the `Authorization`
-header; admin routes additionally require `is_admin`. `/login`, `/register`
-and `/user/update-password` are rate-limited per client IP (10/10/5 requests
-per minute respectively).
+`/register`, `/user/update-password` and `/log` requires a JWT in the
+`Authorization` header; admin routes additionally require `is_admin`.
+`/login`, `/register` and `/user/update-password` are rate-limited per client
+IP (10/10/5 requests per minute respectively; behind Nginx the real client IP
+is read from `X-Forwarded-For`). `GET /health` is a public liveness probe and
+`POST /log` ingests frontend telemetry batches (JSONL under `SENTRY_LOG_DIR`).
 
 | Group       | Examples                                                                                                 |
 | ----------- | -------------------------------------------------------------------------------------------------------- |
@@ -209,10 +216,13 @@ per minute respectively).
 | `/file`     | `verify`, `upload-chunk`, `merge`                                                                        |
 | `/chatroom` | `get-online-users`, `get-callers`                                                                        |
 
-Static assets under `/static/avatars` and `/static/files` are served publicly;
-upload **chunks are never served** — only merged files.
+Static assets under `/static/avatars` and `/static/files` are served publicly
+(through the edge they are reached at `/api/static/...`); upload **chunks are
+never served** — only merged files.
 
-WebSocket channels (all `GET`, JWT passed in the `token` query parameter):
+WebSocket channels (all `GET`, JWT passed in the `token` query parameter;
+through the Nginx edge they are reached at `/api/wss`, `/api/agent/ws` and
+`/api/dashboard/ws`):
 
 | Channel         | Purpose                                                                                      |
 | --------------- | -------------------------------------------------------------------------------------------- |
@@ -245,29 +255,46 @@ yukino-chat/
 │   ├── prisma/                # PostgreSQL schema + migrations
 │   ├── prisma-sqlite/         # SQLite schema + migrations
 │   └── tests/                 # Vitest units + http/ws smoke scripts
+├── docker/                    # Nginx edge image + config template, entrypoint
 └── scripts/                   # repo utilities (bulk rename)
 ```
 
 ## Docker
 
-The root `Dockerfile` builds a single image that serves frontend and backend
-together: the Vite build output is copied into the server image and served by
-Hono with SPA fallback, so one container exposes everything on port 8000.
+Two images, strict frontend/backend separation:
+
+| Image                        | Build                     | Responsibility                                                            |
+| ---------------------------- | ------------------------- | ------------------------------------------------------------------------- |
+| `nginx` (edge)               | `docker/nginx.Dockerfile` | Serves the built SPA; reverse-proxies `/api/*` → `app:8000` (prefix stripped) |
+| `app` (backend)              | root `Dockerfile`         | Hono API + WebSockets + uploads; runs `prisma migrate deploy` on boot      |
 
 ```bash
-docker compose up --build   # postgres + redis + app on http://localhost:8000
+docker compose up --build   # postgres + redis + app + nginx on http://localhost:8000
 ```
 
-- The container entrypoint runs `prisma migrate deploy` before starting the
-  server. It uses `DATABASE_PROVIDER` to pick `prisma/schema.prisma` +
-  `prisma/migrations` (`pg`) or `prisma-sqlite/schema.prisma` +
+- **Nginx is the only published port** (`${HTTP_PORT:-8000}:80`). The browser
+  loads the SPA from it and calls the API through the same origin under
+  `/api/` (HTTP, WebSocket and `/api/static/*` uploads are all proxied, with
+  `Upgrade` headers and hour-long read timeouts for the chat/agent sockets).
+- The SPA is built with `VITE_API_URL=/api` (compose build arg), so the
+  frontend works on any domain without a rebuild. Override the backend
+  upstream with `YUKINO_API_UPSTREAM` (default `app:8000`).
+- The `app` entrypoint runs `prisma migrate deploy` before starting the
+  server. `DATABASE_PROVIDER` picks `prisma/schema.prisma` +
+  `prisma/migrations` (`pg`, default) or `prisma-sqlite/schema.prisma` +
   `prisma-sqlite/migrations` (`sqlite`).
-- `VITE_API_URL` is baked into the frontend at build time (default
-  `http://localhost:8000`); pass a build arg when the browser reaches the
-  server through another origin.
-- Uploads live in `/app/server/static` (a named volume in compose).
-- `docker/nginx.conf` and `docker/config.docker.json` are leftovers from the
-  previous Go + MongoDB layout and are no longer used by the image.
+- **SQLite mode**: set `DATABASE_PROVIDER=sqlite` and
+  `DATABASE_URL=file:/app/data/yukino-chat.db` (persisted on the `app-data`
+  volume; keep it out of `prisma-sqlite/` so the baked-in migrations directory
+  is not shadowed). The `postgres` service stays defined but goes unused —
+  `docker compose stop postgres` to reclaim it. There is no data sync between
+  the two providers; switching providers starts from that provider's own
+  migration history.
+- Uploads live in `/app/server/static` and telemetry JSONL in
+  `/app/server/logs` (named volumes in compose).
+- TLS terminates in front of the edge container (or extend
+  `docker/nginx.conf.template` with a 443 server block and certificate
+  mounts).
 
 ## Deployment Constraints
 
@@ -278,8 +305,10 @@ docker compose up --build   # postgres + redis + app on http://localhost:8000
   runtime registry all live in process memory. Messages routed to a user
   connected to another instance would never be delivered. Plan capacity for
   one instance.
-- **No TLS.** The server speaks plain HTTP/WS. Terminate TLS at a gateway
-  (nginx, caddy, …) in front of it for anything beyond an internal network.
+- **No TLS out of the box.** The backend and the bundled Nginx edge both
+  speak plain HTTP/WS. Terminate TLS at the edge (extend
+  `docker/nginx.conf.template`, or put another gateway in front) for anything
+  beyond an internal network.
 - **`/user/update-password` is unauthenticated by design** (legacy
   forgot-password parity — no email/SMS verification exists). Anyone knowing a
   telephone number can reset that account's password (rate-limited to 5

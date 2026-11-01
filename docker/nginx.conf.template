@@ -1,0 +1,79 @@
+# yukino-chat edge: serves the built SPA and reverse-proxies every backend
+# path under /api/ (the prefix is stripped, so the API keeps its root-level
+# routes). Rendered from /etc/nginx/templates by the official nginx image's
+# envsubst entrypoint hook; ${YUKINO_API_UPSTREAM} is the only substituted
+# variable (nginx runtime vars like $uri are left untouched).
+
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+upstream yukino_api {
+    server ${YUKINO_API_UPSTREAM};
+}
+
+server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Chunked file uploads (the client hashes and splits large files).
+    client_max_body_size 100m;
+
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_comp_level 5;
+    gzip_types
+        text/plain
+        text/css
+        text/xml
+        text/javascript
+        application/json
+        application/javascript
+        application/xml+rss
+        application/atom+xml
+        image/svg+xml
+        font/woff2;
+
+    # Backend API — HTTP endpoints (/api/login -> :8000/login), WebSockets
+    # (/api/wss, /api/agent/ws, /api/dashboard/ws) and user uploads
+    # (/api/static/...). The trailing slash on proxy_pass strips the /api/
+    # prefix. TLS is expected to terminate in front of this container.
+    location /api/ {
+        proxy_pass http://yukino_api/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # WebSocket upgrade (no-ops for plain HTTP requests via the map).
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        # Long-lived chat/agent sockets and streamed responses.
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+        proxy_buffering off;
+        proxy_request_buffering off;
+    }
+
+    # Hashed build assets — immutable for a week.
+    location /assets/ {
+        add_header Cache-Control "public, max-age=604800, immutable";
+        try_files $uri =404;
+    }
+
+    # The service worker must revalidate on every load so PWA updates apply.
+    location = /sw.js {
+        add_header Cache-Control "no-cache";
+        try_files $uri =404;
+    }
+
+    # SPA fallback — client-side routing owns every other path.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

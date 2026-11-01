@@ -7,7 +7,7 @@ import { env } from "../config/env.js";
 import type { Deps } from "../deps.js";
 import type { AppEnv } from "../hono-env.js";
 
-const PUBLIC_PATHS = new Set(["/login", "/register", "/user/update-password"]);
+const PUBLIC_PATHS = new Set(["/login", "/register", "/user/update-password", "/log"]);
 
 export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
   if (c.req.method !== "POST" || PUBLIC_PATHS.has(c.req.path)) {

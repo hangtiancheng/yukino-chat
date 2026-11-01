@@ -63,7 +63,6 @@ describe("read-only tool filter", () => {
       "LoadSkill",
       "AskUserQuestion",
       "SyntheticOutput",
-      "LSP",
       "TodoWrite",
       "TaskOutput",
       "Goal",
@@ -93,6 +92,7 @@ describe("read-only tool filter", () => {
       "Workflow",
       "InstallSkill",
       "TeamList",
+      "LSP",
     ]) {
       expect(filter(name), name).toBe(false);
     }

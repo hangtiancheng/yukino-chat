@@ -1,4 +1,8 @@
 # syntax=docker/dockerfile:1
+#
+# Backend image: builds the Hono server and its two Prisma clients. The
+# frontend is NOT baked in — it is served by the Nginx edge image
+# (docker/nginx.Dockerfile), which reverse-proxies /api/* to this service.
 
 FROM node:24-alpine AS deps
 WORKDIR /app
@@ -8,14 +12,9 @@ RUN npm install -g "pnpm@$(node -p "require('./package.json').packageManager.spl
 COPY pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY client/package.json client/
 COPY server/package.json server/
-RUN pnpm install --frozen-lockfile
-
-FROM deps AS web-builder
-COPY client/ client/
-ARG VITE_API_URL=http://localhost:8000
-ARG VITE_WS_URL=
-ENV VITE_API_URL=${VITE_API_URL} VITE_WS_URL=${VITE_WS_URL}
-RUN pnpm -C client build
+# The frontend is built in the separate edge image, so only the server
+# workspace is installed here.
+RUN pnpm install --frozen-lockfile --filter server
 
 FROM deps AS server-builder
 COPY server/ server/
@@ -32,7 +31,7 @@ RUN pnpm install --frozen-lockfile --prod --filter server...
 
 FROM node:24-alpine AS app
 WORKDIR /app/server
-# prisma is a runtime dependency now (the entrypoint runs `prisma migrate
+# prisma is a runtime dependency (the entrypoint runs `prisma migrate
 # deploy`, and prisma.config.ts imports `prisma/config`), so it ships inside
 # the copied node_modules — no separate global install is needed.
 RUN apk add --no-cache tzdata
@@ -43,7 +42,6 @@ COPY --from=server-builder /app/server/dist ./dist
 COPY --from=server-builder /app/server/prisma ./prisma
 COPY --from=server-builder /app/server/prisma-sqlite ./prisma-sqlite
 COPY --from=server-builder /app/server/prisma.config.ts ./prisma.config.ts
-COPY --from=web-builder /app/client/dist ./web
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 EXPOSE 8000

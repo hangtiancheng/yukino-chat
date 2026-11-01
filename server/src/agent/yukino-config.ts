@@ -1,12 +1,10 @@
-import { Config, type LSP } from "@yukino.js/yukino";
+import { Config } from "@yukino.js/yukino";
 import { env } from "../config/env.js";
 
 export interface AgentConfig {
   provider: Config.ProviderConfig.ProviderConfig;
   mcpServers: Config.MCPServerConfig[];
   hooks: Config.HookConfig[];
-  /** Read-only code intelligence servers from config `lsp_servers`. */
-  lspServers: LSP.Config.LspServerConfig[];
   /** Auto-memory switch from config `enable_memory` (defaults to enabled). */
   memoryEnabled: boolean;
   permissionMode: string;
@@ -29,7 +27,6 @@ function resolve(): AgentConfig | null {
         provider: Config.ProviderConfig.resolveDefaultProvider(cfg.providers, cfg.default_provider),
         mcpServers: cfg.mcp_servers,
         hooks: cfg.hooks,
-        lspServers: cfg.lsp_servers ?? [],
         memoryEnabled: Config.memoryEnabled(cfg),
         permissionMode: cfg.permission_mode ?? "default",
       };
@@ -50,7 +47,6 @@ function resolve(): AgentConfig | null {
     },
     mcpServers: [],
     hooks: [],
-    lspServers: [],
     memoryEnabled: true,
     permissionMode: "default",
   };

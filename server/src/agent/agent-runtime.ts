@@ -129,7 +129,6 @@ export class AgentRuntime {
         cwd: this.workDir,
         mcpServers: this.config.mcpServers,
         hooks: this.config.hooks,
-        lspServers: this.config.lspServers,
         memoryEnabled: this.config.memoryEnabled,
         enableCoordinatorMode: false,
         forkDisabled: false,

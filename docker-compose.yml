@@ -23,12 +23,19 @@ services:
       timeout: 3s
       retries: 12
 
+  # Backend API (HTTP + WebSocket). Not published to the host — the nginx
+  # edge below is the single entry point and proxies /api/* here.
+  #
+  # Database feature flag: DATABASE_PROVIDER=pg (default) uses the postgres
+  # service; DATABASE_PROVIDER=sqlite switches to a local file, e.g.
+  # DATABASE_URL=file:/app/data/yukino-chat.db (persisted on the app-data
+  # volume; keep it OUT of prisma-sqlite/ so the baked-in migrations
+  # directory is not shadowed). The postgres service stays defined but goes
+  # unused in sqlite mode — `docker compose stop postgres` to reclaim it.
   app:
     build:
       context: .
-      args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
-        VITE_WS_URL: ${VITE_WS_URL:-}
+      dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
       postgres:
@@ -37,10 +44,6 @@ services:
         condition: service_healthy
     environment:
       DATABASE_PROVIDER: ${DATABASE_PROVIDER:-pg}
-      # pg (default): point at the postgres service. sqlite: set
-      # DATABASE_PROVIDER=sqlite and DATABASE_URL=file:/app/data/yukino-chat.db
-      # (the app-data volume below persists it; keep it OUT of prisma-sqlite/
-      # so the baked-in migrations directory is not shadowed).
       DATABASE_URL: ${DATABASE_URL:-postgresql://yukino:yukino@postgres:5432/yukino_chat}
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-yukino-chat-jwt-secret}
@@ -48,15 +51,40 @@ services:
       YUKINO_AI_BASE_URL: ${YUKINO_AI_BASE_URL:-}
       YUKINO_AI_API_KEY: ${YUKINO_AI_API_KEY:-}
       YUKINO_AI_MODEL: ${YUKINO_AI_MODEL:-}
-    ports:
-      - "8000:8000"
     volumes:
       - app-static:/app/server/static
       - app-data:/app/data
+      - app-logs:/app/server/logs
       # Optional: mount a Yukino config.yaml instead of the YUKINO_AI_* env vars.
       # - ./docker/yukino.config.yaml:/root/.yukino/config.yaml:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  # Frontend edge: serves the built SPA and reverse-proxies /api/* (HTTP,
+  # WebSocket, uploads) to the app service. This is the only published port.
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx.Dockerfile
+      args:
+        # The browser talks to nginx only; /api is proxied to the backend.
+        VITE_API_URL: ${VITE_API_URL:-/api}
+        VITE_WS_URL: ${VITE_WS_URL:-}
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      YUKINO_API_UPSTREAM: ${YUKINO_API_UPSTREAM:-app:8000}
+    ports:
+      - "${HTTP_PORT:-8000}:80"
 
 volumes:
   postgres-data:
   app-static:
   app-data:
+  app-logs:
