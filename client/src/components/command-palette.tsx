@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Command } from "cmdk";
 import { MessageSquare, Settings, User, Users } from "lucide-react";
-import { useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useNavigate } from "react-router-dom";
 
@@ -12,6 +11,7 @@ import {
   userSessionsQuery,
 } from "@/service/queries";
 import useAuthStore from "@/store/auth";
+import useUiStore from "@/store/ui";
 
 const itemClass =
   "data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-2 text-sm";
@@ -20,12 +20,13 @@ const groupClass =
   "[&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium";
 
 export function CommandPalette() {
-  const [open, setOpen] = useState(false);
+  const open = useUiStore((state) => state.paletteOpen);
+  const setOpen = useUiStore((state) => state.setPaletteOpen);
   const navigate = useNavigate();
   const userId = useAuthStore((state) => state.userInfo.uuid);
   const isAdmin = useAuthStore((state) => state.userInfo.is_admin === 1);
 
-  useHotkeys("mod+k", () => setOpen((previous) => !previous), {
+  useHotkeys("mod+k", () => useUiStore.getState().togglePalette(), {
     preventDefault: true,
     enableOnFormTags: true,
   });
@@ -56,13 +57,13 @@ export function CommandPalette() {
       label="Search conversations and contacts"
       loop
       overlayClassName="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm data-[state=open]:animate-in data-[state=open]:fade-in-0"
-      contentClassName="bg-popover text-popover-foreground border-border data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 fixed top-1/4 left-1/2 z-50 w-full max-w-lg -translate-x-1/2 overflow-hidden rounded-xl border shadow-2xl"
+      contentClassName="bg-popover text-popover-foreground border-border data-[state=open]:animate-in data-[state=open]:fade-in-0 fixed z-50 w-full overflow-hidden border shadow-2xl safe-pt inset-x-0 top-0 translate-x-0 rounded-none rounded-b-2xl data-[state=open]:slide-in-from-top sm:inset-x-auto sm:top-1/4 sm:left-1/2 sm:max-w-lg sm:-translate-x-1/2 sm:rounded-xl sm:data-[state=open]:slide-in-from-top-0 sm:data-[state=open]:zoom-in-95"
     >
       <Command.Input
         placeholder="Jump to a conversation, contact or page…"
-        className="border-border placeholder:text-muted-foreground/60 w-full border-b bg-transparent px-4 py-3 text-sm outline-none"
+        className="border-border placeholder:text-muted-foreground/60 w-full border-b bg-transparent px-4 py-3 text-base outline-none sm:text-sm"
       />
-      <Command.List className="max-h-80 overflow-y-auto p-2">
+      <Command.List className="max-h-[60dvh] overflow-y-auto overscroll-contain p-2 sm:max-h-80">
         <Command.Empty className="text-muted-foreground py-6 text-center text-sm">
           No results found
         </Command.Empty>

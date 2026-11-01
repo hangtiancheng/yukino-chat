@@ -134,7 +134,7 @@ export function MessageComposer({
     editorProps: {
       attributes: {
         class:
-          "min-h-24 max-h-32 overflow-y-auto px-3 py-2.5 text-sm leading-relaxed outline-none",
+          "min-h-11 max-h-36 overflow-y-auto px-3 py-2.5 text-sm leading-relaxed outline-none sm:min-h-24 sm:max-h-32",
       },
       handleKeyDown: (_view, event) => {
         if (menuKeyRef.current(event)) return true;
@@ -299,7 +299,7 @@ export function MessageComposer({
           ref={menuRef}
           role="listbox"
           aria-label="Slash commands"
-          className="border-border bg-popover absolute bottom-full left-2 z-20 mb-1 max-h-60 w-80 overflow-y-auto rounded-lg border p-1 shadow-md"
+          className="border-border bg-popover absolute bottom-full left-2 z-20 mb-1 max-h-60 w-80 max-w-[calc(100vw-1rem)] overflow-y-auto rounded-lg border p-1 shadow-md"
         >
           <div
             className="relative w-full"
@@ -363,7 +363,7 @@ export function MessageComposer({
         </div>
       )}
 
-      <div className="flex items-center justify-between px-2 pb-2">
+      <div className="flex items-center justify-between px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <div className="flex items-center gap-1">
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -371,14 +371,14 @@ export function MessageComposer({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-muted-foreground"
+                  className="text-muted-foreground size-9 md:size-8"
                   aria-label="Insert emoji"
                 />
               }
             >
               <Smile className="size-4" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-64 p-2">
+            <DropdownMenuContent align="start" className="w-64 max-w-[calc(100vw-2rem)] p-2">
               <div className="grid grid-cols-8 gap-1">
                 {EMOJIS.map((emoji) => (
                   <button
@@ -398,7 +398,7 @@ export function MessageComposer({
             <Button
               variant="ghost"
               size="icon"
-              className="text-muted-foreground"
+              className="text-muted-foreground size-9 md:size-8"
               aria-label="Attach a file"
               disabled={disabled || upload.isPending}
               onClick={open}
@@ -410,12 +410,22 @@ export function MessageComposer({
 
         <div className="flex items-center gap-1.5">
           {streaming && onStop && (
-            <Button size="sm" variant="outline" onClick={onStop}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-9 px-3 md:h-8 md:px-2.5"
+              onClick={onStop}
+            >
               <Square className="size-3.5" />
               Stop
             </Button>
           )}
-          <Button size="sm" disabled={disabled || isEmpty} onClick={sendText}>
+          <Button
+            size="sm"
+            className="h-9 px-3 md:h-8 md:px-2.5"
+            disabled={disabled || isEmpty}
+            onClick={sendText}
+          >
             <Send className="size-3.5" />
             Send
           </Button>

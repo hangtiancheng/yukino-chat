@@ -97,16 +97,16 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="bg-background flex min-h-screen flex-col gap-3 p-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-baseline gap-3">
-          <h1 className="text-lg font-semibold">Cache Dashboard</h1>
+    <div className="bg-background safe-pt safe-pb flex min-h-dvh flex-col gap-3 p-3 sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 className="text-base font-semibold sm:text-lg">Cache Dashboard</h1>
           <span className="text-muted-foreground text-xs tabular-nums">
             <NumberFlow value={rows.length} /> entries across {groups.length}{" "}
             groups
           </span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <StatusBadge status={status} />
           <Button
             variant="outline"

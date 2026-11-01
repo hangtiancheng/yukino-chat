@@ -9,9 +9,7 @@
 
 @theme inline {
   --font-heading: var(--font-sans);
-  --font-sans:
-    "Yukino", "Maple Mono", Menlo, "Cascadia Code", "Sarasa Gothic SC",
-    "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-sans: "Sarasa Gothic SC", "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-mono:
     "Yukino", "Maple Mono", Menlo, "Cascadia Code", "Sarasa Gothic SC",
     "PingFang SC", "Microsoft YaHei", monospace;
@@ -185,5 +183,62 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Mobile adaptation
+ * ────────────────────────────────────────────────────────────────────────── */
+
+/* Touch-capability variant: reveals hover-gated affordances on phones/tablets,
+ * where there is no hover state to trigger them. */
+@custom-variant pointer-coarse (@media (pointer: coarse));
+
+@layer base {
+  html {
+    height: 100%;
+    /* Prevent iOS from auto-zooming the page; inputs stay >= 16px. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    height: 100%;
+    margin: 0;
+    /* Kill the grey tap flash on mobile. */
+    -webkit-tap-highlight-color: transparent;
+    /* Remove the 300ms tap delay + accidental double-tap zoom. */
+    touch-action: manipulation;
+    /* Avoid rubber-band pull-to-refresh fighting with in-app scroll areas. */
+    overscroll-behavior-y: none;
+    /* Smooth momentum scrolling everywhere. */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #root {
+    height: 100%;
+    isolation: isolate;
+  }
+}
+
+/* Safe-area helpers (iOS notch / home indicator). No-op on desktop. */
+@utility safe-pt {
+  padding-top: env(safe-area-inset-top);
+}
+@utility safe-pb {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility safe-px {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* On touch, make menu items comfortable tap targets. */
+@media (pointer: coarse) {
+  [data-slot="dropdown-menu-item"] {
+    min-height: 2.5rem;
+  }
+  [cmdk-item] {
+    min-height: 2.5rem;
   }
 }

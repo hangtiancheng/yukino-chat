@@ -1,5 +1,6 @@
 import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
 
+import { useIsTouch } from "@/lib/use-is-mobile";
 import { cn } from "@/lib/utils";
 
 function TooltipProvider({
@@ -36,6 +37,11 @@ function TooltipContent({
     TooltipPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset"
   >) {
+  // Tooltips are hover/focus affordances; on touch they never trigger and
+  // only risk getting in the way, so skip rendering them entirely.
+  const isTouch = useIsTouch();
+  if (isTouch) return null;
+
   return (
     <TooltipPrimitive.Portal>
       <TooltipPrimitive.Positioner

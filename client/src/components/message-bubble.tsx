@@ -114,7 +114,7 @@ function Attachment({
           src={staticUrl(message.url)}
           alt={message.file_name || "image"}
           loading="lazy"
-          className="max-h-60 rounded-lg object-cover"
+          className="max-h-60 max-w-full rounded-lg object-cover"
         />
       </a>
     );
@@ -125,7 +125,7 @@ function Attachment({
         controls
         preload="metadata"
         src={staticUrl(message.url)}
-        className="max-h-60 rounded-lg"
+        className="max-h-60 max-w-full rounded-lg"
       />
     );
   }
@@ -199,7 +199,7 @@ export function MessageBubble({
 
               <div
                 className={cn(
-                  "flex max-w-[70%] min-w-0 flex-col gap-1",
+                  "flex max-w-[85%] min-w-0 flex-col gap-1 sm:max-w-[70%]",
                   isSelf ? "items-end" : "items-start",
                 )}
               >

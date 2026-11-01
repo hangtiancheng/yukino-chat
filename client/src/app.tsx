@@ -30,7 +30,7 @@ const redirectWhenSignedIn = () =>
 function RootErrorBoundary() {
   const error = useRouteError();
   return (
-    <div className="bg-background flex min-h-screen items-center justify-center">
+    <div className="bg-background safe-pt safe-pb flex min-h-dvh items-center justify-center">
       <div className="text-center">
         <h1 className="text-destructive text-2xl font-semibold">
           Something went wrong

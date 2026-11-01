@@ -55,7 +55,7 @@ export function AgentQuestionCard({ item }: { item: AgentQuestionItem }) {
   return (
     <section
       aria-label="Question from Yukino"
-      className="border-primary/30 bg-card max-w-[85%] rounded-lg border px-3 py-2.5 shadow-sm"
+      className="border-primary/30 bg-card max-w-full rounded-lg border px-3 py-2.5 shadow-sm sm:max-w-[85%]"
     >
       <div className="text-foreground flex items-center gap-1.5 text-xs font-semibold">
         <HelpCircle className="text-primary size-3.5" />

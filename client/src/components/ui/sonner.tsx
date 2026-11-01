@@ -7,14 +7,18 @@ import {
   Loader2Icon,
 } from "lucide-react";
 
+import { useIsMobile } from "@/lib/use-is-mobile";
 import { useTheme } from "@/store/theme";
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { resolvedTheme } = useTheme();
+  const isMobile = useIsMobile();
 
   return (
     <Sonner
       theme={(resolvedTheme as ToasterProps["theme"]) ?? "system"}
+      position={isMobile ? "top-center" : "top-right"}
+      offset="calc(env(safe-area-inset-top) + 1rem)"
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4" />,

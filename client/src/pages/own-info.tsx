@@ -111,11 +111,12 @@ export default function OwnInfo() {
 
   return (
     <>
-      <div className="border-border w-55 shrink-0 border-r">
+      {/* Contacts rail is desktop-only; on mobile the profile fills the pane. */}
+      <div className="border-border hidden w-55 shrink-0 border-r md:block">
         <ContactSidebar />
       </div>
 
-      <div className="relative flex flex-1 flex-col items-center justify-center p-8">
+      <div className="safe-pb relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto p-4 sm:p-8">
         <Avatar className="ring-primary/30 ring-offset-card mb-4 size-20 ring-2 ring-offset-2">
           <AvatarImage src={me.avatar || undefined} alt={me.nickname} />
           <AvatarFallback className="text-2xl">
@@ -149,15 +150,20 @@ export default function OwnInfo() {
           </div>
         </div>
 
-        <div className="absolute right-6 bottom-6 flex gap-2">
+        <div className="mt-8 flex w-full max-w-sm gap-2 md:absolute md:right-6 md:bottom-6 md:mt-0 md:w-auto">
           <Button
             size="sm"
             variant="outline"
+            className="flex-1 md:flex-none"
             onClick={() => setPasswordOpen(true)}
           >
             Change Password
           </Button>
-          <Button size="sm" onClick={() => setEditOpen(true)}>
+          <Button
+            size="sm"
+            className="flex-1 md:flex-none"
+            onClick={() => setEditOpen(true)}
+          >
             Edit
           </Button>
         </div>

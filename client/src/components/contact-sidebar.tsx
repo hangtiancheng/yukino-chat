@@ -194,7 +194,7 @@ export function ContactSidebar() {
     <div className="flex h-full w-full flex-col">
       <div className="flex items-center gap-1 p-2">
         <Input
-          className="flex-1 text-sm"
+          className="flex-1"
           placeholder="Search users and groups"
           aria-label="Search users and groups"
           value={keyword}
@@ -206,7 +206,7 @@ export function ContactSidebar() {
               <Button
                 variant="outline"
                 size="icon"
-                className="rounded-md"
+                className="rounded-md size-9 md:size-8"
                 aria-label="Add contact or group"
               />
             }
@@ -332,7 +332,7 @@ export function ContactSidebar() {
                                       variant="ghost"
                                       size="icon"
                                       aria-label={`Options for ${friend.nickname}`}
-                                      className="text-muted-foreground size-6 opacity-0 transition-opacity group-hover:opacity-100"
+                                      className="text-muted-foreground size-8 opacity-0 transition-opacity group-hover:opacity-100 pointer-coarse:opacity-100 md:size-6"
                                     />
                                   }
                                 >

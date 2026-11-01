@@ -65,7 +65,7 @@ function ToolIcon({ name, className }: { name: string; className?: string }) {
 
 function StreamBlock({ item }: { item: AgentStreamItem }) {
   return (
-    <div className="border-border bg-card text-foreground max-w-[70%] rounded-2xl rounded-bl-md border px-3.5 py-2.5 text-sm leading-relaxed wrap-break-word shadow-sm">
+    <div className="border-border bg-card text-foreground max-w-[85%] rounded-2xl rounded-bl-md border px-3.5 py-2.5 text-sm leading-relaxed wrap-break-word shadow-sm sm:max-w-[70%]">
       <Suspense
         fallback={<p className="whitespace-pre-wrap">{item.content}</p>}
       >
@@ -110,7 +110,7 @@ function ToolBlock({ item }: { item: AgentToolItem }) {
       : item.output;
 
   return (
-    <Collapsible className="border-border bg-card/60 max-w-[85%] rounded-lg border">
+    <Collapsible className="border-border bg-card/60 max-w-full rounded-lg border sm:max-w-[85%]">
       <CollapsibleTrigger className="group flex w-full cursor-pointer items-center gap-2 px-2.5 py-1.5 text-left">
         <ChevronRight className="text-muted-foreground size-3 shrink-0 transition-transform group-data-panel-open:rotate-90" />
         <ToolIcon
@@ -217,7 +217,7 @@ export function AgentItemView({ item }: { item: AgentItem }) {
 export function AgentItemList({ items }: { items: AgentItem[] }) {
   if (items.length === 0) return null;
   return (
-    <div className="mt-4 flex flex-col gap-2 pl-11">
+    <div className="mt-4 flex flex-col gap-2 pl-2 sm:pl-11">
       {items.map((item) => (
         <AgentItemView key={item.id} item={item} />
       ))}

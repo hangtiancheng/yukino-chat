@@ -25,7 +25,7 @@ initTheme();
 createRoot(document.getElementById("root")!).render(
   <ReactErrorBoundary
     fallback={
-      <div className="bg-background flex min-h-screen items-center justify-center">
+      <div className="bg-background safe-pt safe-pb flex min-h-dvh items-center justify-center">
         <p className="text-muted-foreground text-center">
           Something went wrong
         </p>
@@ -36,7 +36,7 @@ createRoot(document.getElementById("root")!).render(
       <MotionConfig reducedMotion="user">
         <TooltipProvider delay={300}>
           <App />
-          <Toaster position="top-right" richColors closeButton />
+          <Toaster richColors closeButton />
         </TooltipProvider>
       </MotionConfig>
     </QueryClientProvider>

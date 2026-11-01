@@ -6,7 +6,7 @@ export default function NotFound() {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-background relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+    <div className="bg-background safe-pt safe-pb relative flex min-h-dvh items-center justify-center overflow-hidden p-4">
       <div
         aria-hidden
         className="bg-primary/5 pointer-events-none absolute -top-24 right-1/4 h-80 w-80 rounded-full blur-3xl"

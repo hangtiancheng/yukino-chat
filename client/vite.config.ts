@@ -72,12 +72,16 @@ export default defineConfig({
         "apple-touch-icon-180x180.png",
       ],
       manifest: {
-        name: "resume",
-        short_name: "resume",
-        description: "resume",
+        id: "/",
+        name: "Yukino Chat",
+        short_name: "Yukino",
+        description:
+          "Real-time chat with friends, groups and the Yukino assistant.",
         theme_color: "#f05138",
         background_color: "#f05138",
         display: "standalone",
+        display_override: ["standalone", "minimal-ui"],
+        categories: ["social", "communication"],
         scope: "/",
         start_url: "/",
         icons: [

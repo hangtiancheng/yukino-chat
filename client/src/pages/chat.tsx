@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MoreVertical, Phone, Video } from "lucide-react";
+import { ArrowLeft, MoreVertical, Phone, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useStickToBottom } from "use-stick-to-bottom";
@@ -158,20 +158,31 @@ export default function Chat() {
 
   return (
     <>
-      <div className="border-border w-55 shrink-0 border-r">
+      {/* On mobile the conversation owns the screen; the session list is a
+          separate route reached through the back button below. */}
+      <div className="border-border hidden w-55 shrink-0 border-r md:block">
         <SessionSidebar />
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <div className="border-border bg-muted/30 flex h-14 shrink-0 items-center justify-between border-b px-4">
-          <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="border-border bg-muted/30 flex h-14 shrink-0 items-center justify-between gap-2 border-b px-2 sm:px-4">
+          <div className="flex min-w-0 items-center gap-1.5 sm:gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Back to sessions"
+              className="text-muted-foreground shrink-0 md:hidden"
+              onClick={() => navigate("/chat/sessions")}
+            >
+              <ArrowLeft className="size-5" />
+            </Button>
             {avatar && (
-              <Avatar className="ring-border ring-offset-card size-10 ring-2 ring-offset-2">
+              <Avatar className="ring-border ring-offset-card size-9 shrink-0 ring-2 ring-offset-2 sm:size-10">
                 <AvatarImage src={avatar} alt={name} />
                 <AvatarFallback>{name.charAt(0) || "?"}</AvatarFallback>
               </Avatar>
             )}
-            <h2 className="text-foreground truncate text-base font-semibold">
+            <h2 className="text-foreground truncate text-sm font-semibold sm:text-base">
               {name || (contactInfo.isPending ? "Loading…" : "Unknown")}
             </h2>
           </div>
@@ -343,7 +354,10 @@ export default function Chat() {
           </div>
         </div>
 
-        <div ref={scrollRef} className="bg-muted/20 flex-1 overflow-y-auto p-4">
+        <div
+          ref={scrollRef}
+          className="bg-muted/20 min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4"
+        >
           <div ref={contentRef}>
             {messages.isError ? (
               <p className="text-destructive py-10 text-center text-sm">

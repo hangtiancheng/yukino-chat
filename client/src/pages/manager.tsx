@@ -155,9 +155,9 @@ export default function Manager() {
     groupRows.length > 0 && selectedGroups.length === groupRows.length;
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-3 p-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Administration</h2>
+    <div className="safe-pb flex min-h-0 min-w-0 flex-1 flex-col gap-3 p-3 sm:p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-base font-semibold sm:text-lg">Administration</h2>
         <Button
           variant="outline"
           size="sm"
@@ -169,7 +169,7 @@ export default function Manager() {
       </div>
 
       <Tabs defaultValue="users" className="min-h-0 flex-1">
-        <TabsList className="w-64">
+        <TabsList className="w-full sm:w-64">
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="groups">Groups</TabsTrigger>
         </TabsList>
