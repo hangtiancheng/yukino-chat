@@ -79,7 +79,7 @@ export function ApplyListDialog({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.18 }}
-                  className="border-border flex items-center justify-between gap-2 border-b py-2"
+                  className="border-border flex flex-col items-stretch justify-between gap-2 border-b py-3 sm:flex-row sm:items-center"
                 >
                   <div className="flex min-w-0 items-center gap-2">
                     <span className="text-foreground truncate text-sm">
@@ -91,7 +91,7 @@ export function ApplyListDialog({
                       </span>
                     )}
                   </div>
-                  <div className="flex shrink-0 gap-1">
+                  <div className="flex shrink-0 flex-wrap gap-1">
                     <Button
                       size="sm"
                       className="px-2 text-xs"

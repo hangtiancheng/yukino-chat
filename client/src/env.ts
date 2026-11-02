@@ -31,7 +31,9 @@ function deriveWsBase(api: string): string {
   return `${proto}//${window.location.host}${path}`;
 }
 
-export const wsUrl = withoutTrailingSlash(env.VITE_WS_URL ?? deriveWsBase(apiUrl));
+export const wsUrl = withoutTrailingSlash(
+  env.VITE_WS_URL ?? deriveWsBase(apiUrl),
+);
 
 export function staticUrl(path: string): string {
   if (!path) return "";

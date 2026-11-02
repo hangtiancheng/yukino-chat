@@ -1,6 +1,6 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImageUp } from "lucide-react";
+import { ImageUp, Monitor, Moon, Sun } from "lucide-react";
 import Linkify from "linkify-react";
 import { useState } from "react";
 import { useDropzone } from "react-dropzone";
@@ -25,16 +25,19 @@ import { profileSchema } from "@/lib/validation";
 import { message, user } from "@/service/api";
 import { keys, profileQuery } from "@/service/queries";
 import useAuthStore from "@/store/auth";
+import { useTheme, type Theme } from "@/store/theme";
 import { showToast } from "@/utils/toast";
 
 type ProfileValues = z.infer<typeof profileSchema>;
 
 function InfoLine({ label, value }: { label: string; value: string }) {
   return (
-    <p>
-      <span className="text-muted-foreground">{label}:</span>{" "}
-      <span className="text-foreground">{value || "—"}</span>
-    </p>
+    <div className="grid grid-cols-[5rem_minmax(0,1fr)] gap-3 py-2.5 sm:grid-cols-[6rem_minmax(0,1fr)]">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="text-foreground min-w-0 wrap-anywhere">
+        {value || "—"}
+      </span>
+    </div>
   );
 }
 
@@ -42,6 +45,7 @@ export default function OwnInfo() {
   const queryClient = useQueryClient();
   const storedUser = useAuthStore((state) => state.userInfo);
   const userId = storedUser.uuid;
+  const { theme, setTheme } = useTheme();
 
   const [editOpen, setEditOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
@@ -112,60 +116,97 @@ export default function OwnInfo() {
   return (
     <>
       {/* Contacts rail is desktop-only; on mobile the profile fills the pane. */}
-      <div className="border-border hidden w-55 shrink-0 border-r md:block">
+      <div className="border-border bg-card hidden min-h-0 w-64 shrink-0 overflow-hidden border-r md:block lg:w-80">
         <ContactSidebar />
       </div>
 
-      <div className="safe-pb relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto p-4 sm:p-8">
-        <Avatar className="ring-primary/30 ring-offset-card mb-4 size-20 ring-2 ring-offset-2">
-          <AvatarImage src={me.avatar || undefined} alt={me.nickname} />
-          <AvatarFallback className="text-2xl">
-            {me.nickname.charAt(0).toUpperCase() || "?"}
-          </AvatarFallback>
-        </Avatar>
-        <h2 className="mb-6 text-xl font-semibold">{me.nickname}</h2>
-
-        <div className="text-foreground flex flex-col gap-2 text-sm">
-          <InfoLine label="User ID" value={me.uuid} />
-          <InfoLine label="Phone" value={me.telephone} />
-          <InfoLine label="Email" value={me.email} />
-          <InfoLine
-            label="Gender"
-            value={me.gender === 0 ? "Male" : "Female"}
-          />
-          <InfoLine label="Birthday" value={me.birthday} />
-          <InfoLine label="Joined" value={me.created_at} />
-          <div>
-            <span className="text-muted-foreground">Signature:</span>{" "}
-            <Linkify
-              as="span"
-              options={{
-                target: "_blank",
-                rel: "noreferrer",
-                className: "text-primary underline underline-offset-2",
-              }}
-            >
-              {me.signature || "—"}
-            </Linkify>
+      <div className="bg-muted/20 flex min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
+        <div className="bg-card border-border m-auto w-full max-w-xl shrink-0 rounded-2xl border p-5 shadow-sm sm:p-8">
+          <div className="mb-6 flex min-w-0 items-center gap-4">
+            <Avatar className="ring-primary/20 ring-offset-card size-16 shrink-0 rounded-2xl ring-2 ring-offset-4 sm:size-20">
+              <AvatarImage src={me.avatar || undefined} alt={me.nickname} />
+              <AvatarFallback className="text-2xl">
+                {me.nickname.charAt(0).toUpperCase() || "?"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <p className="text-muted-foreground mb-1 text-xs">My profile</p>
+              <h1 className="text-xl font-semibold wrap-anywhere">
+                {me.nickname}
+              </h1>
+            </div>
           </div>
-        </div>
 
-        <div className="mt-8 flex w-full max-w-sm gap-2 md:absolute md:right-6 md:bottom-6 md:mt-0 md:w-auto">
-          <Button
-            size="sm"
-            variant="outline"
-            className="flex-1 md:flex-none"
-            onClick={() => setPasswordOpen(true)}
-          >
-            Change Password
-          </Button>
-          <Button
-            size="sm"
-            className="flex-1 md:flex-none"
-            onClick={() => setEditOpen(true)}
-          >
-            Edit
-          </Button>
+          <div className="text-foreground divide-border divide-y text-sm">
+            <InfoLine label="User ID" value={me.uuid} />
+            <InfoLine label="Phone" value={me.telephone} />
+            <InfoLine label="Email" value={me.email} />
+            <InfoLine
+              label="Gender"
+              value={me.gender === 0 ? "Male" : "Female"}
+            />
+            <InfoLine label="Birthday" value={me.birthday} />
+            <InfoLine label="Joined" value={me.created_at} />
+            <div className="grid grid-cols-[5rem_minmax(0,1fr)] gap-3 py-2.5 sm:grid-cols-[6rem_minmax(0,1fr)]">
+              <span className="text-muted-foreground">Signature</span>
+              <Linkify
+                as="span"
+                options={{
+                  target: "_blank",
+                  rel: "noreferrer",
+                  className:
+                    "text-primary-ink underline underline-offset-2 wrap-anywhere",
+                }}
+              >
+                {me.signature || "—"}
+              </Linkify>
+            </div>
+          </div>
+
+          <div className="mt-5">
+            <p className="text-muted-foreground mb-2 text-xs">Appearance</p>
+            <div
+              role="group"
+              aria-label="Color theme"
+              className="bg-muted/60 grid grid-cols-3 gap-1 rounded-xl p-1"
+            >
+              {(
+                [
+                  { value: "light", label: "Light", icon: Sun },
+                  { value: "dark", label: "Dark", icon: Moon },
+                  { value: "system", label: "System", icon: Monitor },
+                ] satisfies { value: Theme; label: string; icon: typeof Sun }[]
+              ).map(({ value, label, icon: Icon }) => (
+                <Button
+                  key={value}
+                  variant={theme === value ? "secondary" : "ghost"}
+                  aria-pressed={theme === value}
+                  className="h-11 min-w-0 gap-1 px-1 text-xs"
+                  onClick={() => setTheme(value)}
+                >
+                  <Icon className="size-4" /> {label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-11 flex-1 sm:h-9"
+              onClick={() => setPasswordOpen(true)}
+            >
+              Change Password
+            </Button>
+            <Button
+              size="sm"
+              className="h-11 flex-1 sm:h-9"
+              onClick={() => setEditOpen(true)}
+            >
+              Edit
+            </Button>
+          </div>
         </div>
 
         <Dialog

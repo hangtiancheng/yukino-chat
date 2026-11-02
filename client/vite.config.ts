@@ -77,8 +77,8 @@ export default defineConfig({
         short_name: "Yukino",
         description:
           "Real-time chat with friends, groups and the Yukino assistant.",
-        theme_color: "#f05138",
-        background_color: "#f05138",
+        theme_color: "#f4f7f2",
+        background_color: "#f4f7f2",
         display: "standalone",
         display_override: ["standalone", "minimal-ui"],
         categories: ["social", "communication"],

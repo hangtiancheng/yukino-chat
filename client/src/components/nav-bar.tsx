@@ -13,13 +13,15 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { motion } from "motion/react";
 import { useTheme } from "@/store/theme";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useMatch, useNavigate } from "react-router-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -84,7 +86,7 @@ function RailButton({
               destructive
                 ? "text-destructive hover:bg-destructive/10 hover:text-destructive"
                 : active
-                  ? "text-primary hover:text-primary"
+                  ? "text-primary-ink hover:text-primary-ink"
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
             )}
           />
@@ -119,12 +121,21 @@ function MobileTab({ label, icon: Icon, onClick, active }: MobileTabProps) {
       aria-label={label}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex min-w-0 flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 px-1 py-1.5 transition-colors",
-        active ? "text-primary" : "text-muted-foreground active:text-foreground",
+        "focus-visible:ring-ring relative flex min-h-14 min-w-0 flex-1 cursor-pointer flex-col items-center justify-center gap-1 px-1 py-2 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-inset",
+        active
+          ? "text-primary-ink"
+          : "text-muted-foreground active:text-foreground",
       )}
     >
-      <Icon className="size-5" />
-      <span className="max-w-full truncate text-[10px] font-medium leading-none">
+      <span
+        className={cn(
+          "flex h-6 w-12 items-center justify-center rounded-full transition-colors",
+          active && "bg-primary/12",
+        )}
+      >
+        <Icon className="size-5" />
+      </span>
+      <span className="max-w-full truncate text-[11px] leading-none font-medium">
         {label}
       </span>
     </button>
@@ -134,6 +145,11 @@ function MobileTab({ label, icon: Icon, onClick, active }: MobileTabProps) {
 export function NavBar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const chatRoute = useMatch("/chat/:id");
+  const isConversation = Boolean(
+    chatRoute &&
+    !["sessions", "contacts", "profile"].includes(chatRoute.params.id ?? ""),
+  );
   const userInfo = useAuthStore((state) => state.userInfo);
   const { resolvedTheme, setTheme } = useTheme();
   const togglePalette = useUiStore((state) => state.togglePalette);
@@ -150,7 +166,10 @@ export function NavBar() {
   return (
     <>
       {/* Desktop: vertical rail on the left. */}
-      <nav className="border-border bg-muted/50 hidden h-full w-16 shrink-0 flex-col items-center border-r py-4 md:flex">
+      <nav
+        aria-label="Main navigation"
+        className="border-border bg-sidebar hidden h-full w-16 shrink-0 flex-col items-center border-r py-4 md:flex"
+      >
         <Avatar className="ring-primary/30 ring-offset-card size-10 ring-2 ring-offset-2 transition-transform duration-200 hover:scale-105">
           <AvatarImage src={userInfo.avatar} alt={userInfo.nickname} />
           <AvatarFallback>
@@ -174,11 +193,7 @@ export function NavBar() {
 
         <div className="flex flex-col items-center gap-1">
           <div className="bg-border mb-2 h-px w-8" aria-hidden="true" />
-          <RailButton
-            label={isDark ? "Light mode" : "Dark mode"}
-            icon={isDark ? Sun : Moon}
-            onClick={() => setTheme(isDark ? "light" : "dark")}
-          />
+          <ThemeToggle />
           {isAdmin && (
             <RailButton
               label="Admin"
@@ -197,7 +212,13 @@ export function NavBar() {
       </nav>
 
       {/* Mobile: bottom tab bar with safe-area padding. */}
-      <nav className="border-border bg-muted/50 order-last flex shrink-0 items-stretch border-t safe-px h-[calc(3.5rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] md:hidden">
+      <nav
+        aria-label="Main navigation"
+        className={cn(
+          "border-border bg-card order-last flex shrink-0 items-stretch border-t pb-[env(safe-area-inset-bottom)] md:hidden",
+          isConversation && "hidden",
+        )}
+      >
         {NAV_ITEMS.map((item) => (
           <MobileTab
             key={item.path}
@@ -224,36 +245,49 @@ export function NavBar() {
                 aria-label="More options"
                 aria-current={undefined}
                 className={cn(
-                  "flex min-w-0 flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 px-1 py-1.5 transition-colors",
+                  "focus-visible:ring-ring flex min-h-14 min-w-0 flex-1 cursor-pointer flex-col items-center justify-center gap-1 px-1 py-2 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-inset",
                   "text-muted-foreground active:text-foreground",
                 )}
               />
             }
           >
-            <MoreHorizontal className="size-5" />
-            <span className="text-[10px] font-medium leading-none">More</span>
+            <span className="flex h-6 items-center">
+              <MoreHorizontal className="size-5" />
+            </span>
+            <span className="text-[11px] leading-none font-medium">More</span>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="end" className="mb-1 w-52">
-            <DropdownMenuLabel>{userInfo.nickname}</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => togglePalette()}>
-              <Search className="size-4" />
-              Search
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme(isDark ? "light" : "dark")}>
-              {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
-              {isDark ? "Light mode" : "Dark mode"}
-            </DropdownMenuItem>
-            {isAdmin && (
-              <DropdownMenuItem onClick={() => navigate("/dashboard")}>
-                <ChartBar className="size-4" />
-                Cache Dashboard
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>{userInfo.nickname}</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => togglePalette()}>
+                <Search className="size-4" />
+                Search
               </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" onClick={() => void signOut()}>
-              <LogOut className="size-4" />
-              Sign Out
-            </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setTheme(isDark ? "light" : "dark")}
+              >
+                {isDark ? (
+                  <Sun className="size-4" />
+                ) : (
+                  <Moon className="size-4" />
+                )}
+                {isDark ? "Light mode" : "Dark mode"}
+              </DropdownMenuItem>
+              {isAdmin && (
+                <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                  <ChartBar className="size-4" />
+                  Cache Dashboard
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => void signOut()}
+              >
+                <LogOut className="size-4" />
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
       </nav>

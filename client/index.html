@@ -10,7 +10,28 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content"
     />
-    <meta name="theme-color" content="#f05138" />
+    <meta name="theme-color" content="#f4f7f2" />
+    <script>
+      (() => {
+        let theme = "system";
+        try {
+          theme =
+            JSON.parse(localStorage.getItem("yukino-theme"))?.state?.theme ??
+            "system";
+        } catch {
+          // Storage can be unavailable in private browsing.
+        }
+        const dark =
+          theme === "dark" ||
+          (theme === "system" &&
+            matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", dark);
+        document.documentElement.style.colorScheme = dark ? "dark" : "light";
+        document.querySelector('meta[name="theme-color"]').content = dark
+          ? "#151b17"
+          : "#f4f7f2";
+      })();
+    </script>
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />

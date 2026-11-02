@@ -1,9 +1,13 @@
 import { motion } from "motion/react";
 import type { ReactNode } from "react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="bg-background relative h-dvh overflow-y-auto safe-pt safe-pb">
+    <div className="app-viewport bg-background safe-pt safe-pb overflow-y-auto overscroll-contain">
+      <div className="fixed top-[max(0.5rem,env(safe-area-inset-top))] right-[max(0.5rem,env(safe-area-inset-right))] z-10">
+        <ThemeToggle className="bg-card/80 size-11 rounded-full backdrop-blur-sm" />
+      </div>
       {/* Decorative blobs are fixed so they never extend the scroll area. */}
       <div
         aria-hidden

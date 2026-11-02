@@ -40,6 +40,7 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-ink: var(--primary-ink);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -63,28 +64,31 @@
 }
 
 :root {
+  color-scheme: light;
   --radius: 0.625rem;
 
-  --background: oklch(0.97 0.008 350);
-  --foreground: oklch(0.25 0.02 350);
+  --background: #f4f7f2;
+  --foreground: #243128;
 
-  --card: oklch(0.99 0.005 350);
-  --card-foreground: oklch(0.25 0.02 350);
+  --card: #fdfefb;
+  --card-foreground: #243128;
 
-  --popover: oklch(0.99 0.005 350);
-  --popover-foreground: oklch(0.25 0.02 350);
+  --popover: #fdfefb;
+  --popover-foreground: #243128;
 
-  --primary: oklch(0.62 0.16 350);
-  --primary-foreground: oklch(0.98 0.01 350);
+  /* Pale sage fills use dark forest text; links keep their own readable ink. */
+  --primary: #b4cda8;
+  --primary-foreground: #22352a;
+  --primary-ink: #3d684b;
 
-  --secondary: oklch(0.93 0.025 350);
-  --secondary-foreground: oklch(0.3 0.03 350);
+  --secondary: #e8efe2;
+  --secondary-foreground: #354a39;
 
-  --muted: oklch(0.94 0.018 350);
-  --muted-foreground: oklch(0.5 0.025 350);
+  --muted: #edf2e9;
+  --muted-foreground: #637160;
 
-  --accent: oklch(0.91 0.035 350);
-  --accent-foreground: oklch(0.25 0.03 350);
+  --accent: #e1ebd9;
+  --accent-foreground: #2e4834;
 
   --destructive: oklch(0.58 0.22 25);
   --destructive-foreground: oklch(0.98 0.01 25);
@@ -98,49 +102,50 @@
   --info: oklch(0.62 0.14 230);
   --info-foreground: oklch(0.98 0.01 230);
 
-  --border: oklch(0.9 0.02 350);
-  --input: oklch(0.88 0.025 350);
-  --ring: oklch(0.62 0.16 350);
+  --border: #dce4d7;
+  --input: #cedac7;
+  --ring: #6c916c;
 
-  --chart-1: oklch(0.62 0.16 350);
-  --chart-2: oklch(0.68 0.12 330);
-  --chart-3: oklch(0.72 0.1 310);
-  --chart-4: oklch(0.65 0.14 20);
-  --chart-5: oklch(0.7 0.11 40);
+  --chart-1: #71966b;
+  --chart-2: #9dbb8e;
+  --chart-3: #6b9b8b;
+  --chart-4: #b6b580;
+  --chart-5: #9eaab5;
 
-  --sidebar: oklch(0.96 0.012 350);
-  --sidebar-foreground: oklch(0.25 0.02 350);
-  --sidebar-primary: oklch(0.62 0.16 350);
-  --sidebar-primary-foreground: oklch(0.98 0.01 350);
-  --sidebar-accent: oklch(0.92 0.03 350);
-  --sidebar-accent-foreground: oklch(0.25 0.03 350);
-  --sidebar-border: oklch(0.9 0.02 350);
-  --sidebar-ring: oklch(0.62 0.16 350);
+  --sidebar: #eaf0e5;
+  --sidebar-foreground: #354a39;
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: #dce8d4;
+  --sidebar-accent-foreground: #2e4834;
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
 }
 
 .dark {
   color-scheme: dark;
 
-  --background: oklch(0.19 0.015 350);
-  --foreground: oklch(0.95 0.01 350);
+  --background: #151b17;
+  --foreground: #e4eae1;
 
-  --card: oklch(0.23 0.018 350);
-  --card-foreground: oklch(0.95 0.01 350);
+  --card: #1c251f;
+  --card-foreground: #e4eae1;
 
-  --popover: oklch(0.23 0.018 350);
-  --popover-foreground: oklch(0.95 0.01 350);
+  --popover: #202a23;
+  --popover-foreground: #e4eae1;
 
-  --primary: oklch(0.72 0.15 350);
-  --primary-foreground: oklch(0.18 0.02 350);
+  --primary: #acc79f;
+  --primary-foreground: #1e3022;
+  --primary-ink: #b3cfa9;
 
-  --secondary: oklch(0.29 0.03 350);
-  --secondary-foreground: oklch(0.94 0.012 350);
+  --secondary: #2b372d;
+  --secondary-foreground: #dbe7d7;
 
-  --muted: oklch(0.27 0.022 350);
-  --muted-foreground: oklch(0.68 0.02 350);
+  --muted: #253027;
+  --muted-foreground: #a3b09f;
 
-  --accent: oklch(0.33 0.04 350);
-  --accent-foreground: oklch(0.96 0.01 350);
+  --accent: #324135;
+  --accent-foreground: #e6eee1;
 
   --destructive: oklch(0.65 0.2 25);
   --destructive-foreground: oklch(0.15 0.02 25);
@@ -154,24 +159,68 @@
   --info: oklch(0.68 0.13 230);
   --info-foreground: oklch(0.15 0.02 230);
 
-  --border: oklch(0.32 0.025 350);
-  --input: oklch(0.35 0.028 350);
-  --ring: oklch(0.72 0.15 350);
+  --border: #354237;
+  --input: #435244;
+  --ring: #91b28b;
 
-  --chart-1: oklch(0.72 0.15 350);
-  --chart-2: oklch(0.75 0.11 330);
-  --chart-3: oklch(0.78 0.09 310);
-  --chart-4: oklch(0.72 0.13 20);
-  --chart-5: oklch(0.76 0.1 40);
+  --chart-1: #acc79f;
+  --chart-2: #85aa79;
+  --chart-3: #80b8a4;
+  --chart-4: #c5c58c;
+  --chart-5: #a0b1c2;
 
-  --sidebar: oklch(0.22 0.018 350);
-  --sidebar-foreground: oklch(0.95 0.01 350);
-  --sidebar-primary: oklch(0.72 0.15 350);
-  --sidebar-primary-foreground: oklch(0.18 0.02 350);
-  --sidebar-accent: oklch(0.31 0.035 350);
-  --sidebar-accent-foreground: oklch(0.96 0.01 350);
-  --sidebar-border: oklch(0.32 0.025 350);
-  --sidebar-ring: oklch(0.72 0.15 350);
+  --sidebar: #19221c;
+  --sidebar-foreground: #dbe7d7;
+  --sidebar-accent: #2c3a2e;
+  --sidebar-accent-foreground: #e6eee1;
+}
+
+/* Crossfade snapshots on the compositor, keeping long conversations responsive. */
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-old(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  animation: theme-reveal 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  mix-blend-mode: normal;
+}
+
+@keyframes theme-reveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Paint-only fallback for browsers without the View Transition API. */
+@media (prefers-reduced-motion: no-preference) {
+  html.theme-switching,
+  html.theme-switching *:not([data-theme-icon]),
+  html.theme-switching *::before,
+  html.theme-switching *::after {
+    transition-property:
+      background-color, color, border-color, box-shadow, fill, stroke;
+    transition-duration: 280ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @layer base {
@@ -233,12 +282,34 @@
   padding-right: env(safe-area-inset-right);
 }
 
+/* VisualViewport also accounts for keyboards on iOS, where dvh alone does not. */
+@utility app-viewport {
+  position: fixed;
+  inset-inline: 0;
+  top: var(--app-offset-top, 0px);
+  height: var(--app-height, 100dvh);
+  min-height: 0;
+}
+
 /* On touch, make menu items comfortable tap targets. */
 @media (pointer: coarse) {
+  [data-slot="button"] {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
+  [data-slot="input"],
+  [data-slot="textarea"],
+  [contenteditable="true"],
+  [cmdk-input] {
+    /* Avoid focus zoom on iOS, including tablets using the desktop layout. */
+    font-size: 1rem;
+  }
+
   [data-slot="dropdown-menu-item"] {
-    min-height: 2.5rem;
+    min-height: 2.75rem;
   }
   [cmdk-item] {
-    min-height: 2.5rem;
+    min-height: 2.75rem;
   }
 }

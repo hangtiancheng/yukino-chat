@@ -31,9 +31,48 @@ const resolveTheme = (state: ThemeState): ResolvedTheme =>
       : "light"
     : state.theme;
 
-function applyTheme(resolved: ResolvedTheme) {
-  document.documentElement.classList.toggle("dark", resolved === "dark");
-  document.documentElement.style.colorScheme = resolved;
+let transitionTimer: ReturnType<typeof setTimeout> | undefined;
+let activeTransition: ViewTransition | undefined;
+let themeChangeId = 0;
+
+function applyTheme(resolved: ResolvedTheme, animate = false) {
+  const changeId = ++themeChangeId;
+  const root = document.documentElement;
+  const shouldAnimate =
+    animate && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  clearTimeout(transitionTimer);
+  activeTransition?.skipTransition();
+  root.classList.remove("theme-switching");
+
+  const update = () => {
+    if (changeId !== themeChangeId) return;
+    root.classList.toggle("dark", resolved === "dark");
+    root.style.colorScheme = resolved;
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", resolved === "dark" ? "#151b17" : "#f4f7f2");
+  };
+
+  if (shouldAnimate && typeof document.startViewTransition === "function") {
+    // One composited crossfade avoids animating every element in long chats.
+    const transition = document.startViewTransition(update);
+    activeTransition = transition;
+    void transition.ready.catch(() => {});
+    void transition.finished
+      .catch(() => {})
+      .then(() => {
+        if (activeTransition === transition) activeTransition = undefined;
+      });
+  } else if (shouldAnimate) {
+    root.classList.add("theme-switching");
+    update();
+    transitionTimer = setTimeout(
+      () => root.classList.remove("theme-switching"),
+      320,
+    );
+  } else {
+    update();
+  }
 }
 
 export function initTheme() {
@@ -42,8 +81,12 @@ export function initTheme() {
   media.addEventListener("change", (event) => {
     useThemeStore.setState({ systemIsDark: event.matches });
   });
-  useThemeStore.subscribe((state) => applyTheme(resolveTheme(state)));
   applyTheme(resolveTheme(useThemeStore.getState()));
+  useThemeStore.subscribe((state, previous) => {
+    if (resolveTheme(state) !== resolveTheme(previous)) {
+      applyTheme(resolveTheme(state), true);
+    }
+  });
 }
 
 export function useTheme() {

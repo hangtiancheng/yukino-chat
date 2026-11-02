@@ -24,10 +24,10 @@ export function AgentPermissionCard({ item }: { item: AgentPermissionItem }) {
   return (
     <section
       aria-label={`Permission request for ${item.toolName}`}
-      className="border-primary/30 bg-card max-w-full rounded-lg border px-3 py-2.5 shadow-sm sm:max-w-[85%]"
+      className="border-primary/30 bg-card max-w-full min-w-0 rounded-lg border px-3 py-2.5 wrap-anywhere shadow-sm sm:max-w-[85%]"
     >
       <div className="text-foreground flex items-center gap-1.5 text-xs font-semibold">
-        <ShieldQuestion className="text-primary size-3.5" />
+        <ShieldQuestion className="text-primary-ink size-3.5" />
         {item.toolName} needs permission
       </div>
       <p className="text-muted-foreground mt-1 text-xs wrap-break-word whitespace-pre-wrap">

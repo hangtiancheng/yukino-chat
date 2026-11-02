@@ -20,7 +20,10 @@ export function MessageContent({ content, className }: MessageContentProps) {
       animated={false}
       parseIncompleteMarkdown={false}
       plugins={plugins}
-      className={cn("space-y-2 text-sm leading-relaxed", className)}
+      className={cn(
+        "max-w-full min-w-0 space-y-2 text-sm leading-relaxed wrap-anywhere **:data-[streamdown=link]:text-[color:var(--message-link-color,var(--primary-ink))] [&_pre]:max-w-full [&_pre]:overflow-x-auto",
+        className,
+      )}
     >
       {content}
     </Streamdown>

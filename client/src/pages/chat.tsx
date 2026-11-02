@@ -1,5 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, MoreVertical, Phone, Video } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowLeft,
+  Moon,
+  MoreVertical,
+  Phone,
+  Sun,
+  Video,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useStickToBottom } from "use-stick-to-bottom";
@@ -22,6 +30,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -43,6 +52,7 @@ import useAgentStore from "@/store/agent";
 import useAuthStore from "@/store/auth";
 import useCallStore from "@/store/call";
 import useWsStore from "@/store/ws";
+import { useTheme } from "@/store/theme";
 import type { CallMedia } from "@/utils/rtc";
 import { showToast } from "@/utils/toast";
 
@@ -60,6 +70,8 @@ export default function Chat() {
   const queryClient = useQueryClient();
   const userInfo = useAuthStore((state) => state.userInfo);
   const userId = userInfo.uuid;
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   const [dialog, setDialog] = useState<OpenDialog | null>(null);
 
@@ -107,10 +119,11 @@ export default function Chat() {
     }
   }
 
-  const { scrollRef, contentRef } = useStickToBottom({
-    initial: "instant",
-    resize: "smooth",
-  });
+  const { scrollRef, contentRef, isAtBottom, scrollToBottom } =
+    useStickToBottom({
+      initial: "instant",
+      resize: "smooth",
+    });
 
   const { mutate: markAsRead } = useMutation({
     mutationFn: () => session.markRead(userId, id),
@@ -160,18 +173,18 @@ export default function Chat() {
     <>
       {/* On mobile the conversation owns the screen; the session list is a
           separate route reached through the back button below. */}
-      <div className="border-border hidden w-55 shrink-0 border-r md:block">
+      <div className="border-border bg-card hidden min-h-0 w-64 shrink-0 overflow-hidden border-r md:block lg:w-80">
         <SessionSidebar />
       </div>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <div className="border-border bg-muted/30 flex h-14 shrink-0 items-center justify-between gap-2 border-b px-2 sm:px-4">
+        <div className="border-border bg-card flex min-h-16 shrink-0 items-center justify-between gap-2 border-b px-2 py-2 sm:px-5">
           <div className="flex min-w-0 items-center gap-1.5 sm:gap-3">
             <Button
               variant="ghost"
               size="icon"
               aria-label="Back to sessions"
-              className="text-muted-foreground shrink-0 md:hidden"
+              className="text-muted-foreground size-11 shrink-0 md:hidden"
               onClick={() => navigate("/chat/sessions")}
             >
               <ArrowLeft className="size-5" />
@@ -182,12 +195,21 @@ export default function Chat() {
                 <AvatarFallback>{name.charAt(0) || "?"}</AvatarFallback>
               </Avatar>
             )}
-            <h2 className="text-foreground truncate text-sm font-semibold sm:text-base">
-              {name || (contactInfo.isPending ? "Loading…" : "Unknown")}
-            </h2>
+            <div className="min-w-0">
+              <h1 className="text-foreground truncate text-sm font-semibold sm:text-base">
+                {name || (contactInfo.isPending ? "Loading…" : "Unknown")}
+              </h1>
+              <p className="text-muted-foreground mt-0.5 truncate text-[11px] sm:text-xs">
+                {isAssistant
+                  ? "Yukino assistant"
+                  : isGroup
+                    ? "Group conversation"
+                    : "Direct message"}
+              </p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
             {isAssistant ? (
               <AgentStatus />
             ) : (
@@ -198,7 +220,7 @@ export default function Chat() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-muted-foreground"
+                        className="text-muted-foreground size-11 md:size-9"
                         aria-label="Audio call"
                         disabled={!contactInfo.data}
                         onClick={() => startCall("audio")}
@@ -216,7 +238,7 @@ export default function Chat() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-muted-foreground"
+                        className="text-muted-foreground hidden size-11 sm:inline-flex md:size-9"
                         aria-label="Video call"
                         disabled={!contactInfo.data}
                         onClick={() => startCall("video")}
@@ -236,7 +258,7 @@ export default function Chat() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-muted-foreground"
+                    className="text-muted-foreground size-11 md:size-9"
                     aria-label="Chat options"
                   />
                 }
@@ -244,6 +266,26 @@ export default function Chat() {
                 <MoreVertical className="size-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuItem
+                  onClick={() => setTheme(isDark ? "light" : "dark")}
+                >
+                  {isDark ? (
+                    <Sun className="size-4" />
+                  ) : (
+                    <Moon className="size-4" />
+                  )}
+                  {isDark ? "Light mode" : "Dark mode"}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {!isAssistant && (
+                  <DropdownMenuItem
+                    className="sm:hidden"
+                    disabled={!contactInfo.data}
+                    onClick={() => startCall("video")}
+                  >
+                    <Video className="size-4" /> Video Call
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   className="text-sm"
                   onClick={() => setDialog(isGroup ? "group" : "user")}
@@ -354,37 +396,50 @@ export default function Chat() {
           </div>
         </div>
 
-        <div
-          ref={scrollRef}
-          className="bg-muted/20 min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4"
-        >
-          <div ref={contentRef}>
-            {messages.isError ? (
-              <p className="text-destructive py-10 text-center text-sm">
-                {errorMessage(messages.error)}
-              </p>
-            ) : messages.isPending ? (
-              <p className="text-muted-foreground animate-pulse py-10 text-center text-sm">
-                Loading messages…
-              </p>
-            ) : (
-              <MessageBubble
-                messageList={messages.data}
-                currentUserId={userInfo.uuid}
-                currentUserAvatar={userInfo.avatar}
-                currentUserName={userInfo.nickname}
-                renderAfter={
-                  isAssistant
-                    ? (uuid) => {
-                        const items = overlayByAnchor.get(uuid);
-                        return items ? <AgentItemList items={items} /> : null;
-                      }
-                    : undefined
-                }
-              />
-            )}
-            {isAssistant && <AgentItemList items={trailingOverlay} />}
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          <div
+            ref={scrollRef}
+            className="bg-muted/20 min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain p-3 sm:p-5"
+          >
+            <div ref={contentRef} className="mx-auto w-full max-w-4xl">
+              {messages.isError ? (
+                <p className="text-destructive py-10 text-center text-sm">
+                  {errorMessage(messages.error)}
+                </p>
+              ) : messages.isPending ? (
+                <p className="text-muted-foreground animate-pulse py-10 text-center text-sm">
+                  Loading messages…
+                </p>
+              ) : (
+                <MessageBubble
+                  messageList={messages.data}
+                  currentUserId={userInfo.uuid}
+                  currentUserAvatar={userInfo.avatar}
+                  currentUserName={userInfo.nickname}
+                  renderAfter={
+                    isAssistant
+                      ? (uuid) => {
+                          const items = overlayByAnchor.get(uuid);
+                          return items ? <AgentItemList items={items} /> : null;
+                        }
+                      : undefined
+                  }
+                />
+              )}
+              {isAssistant && <AgentItemList items={trailingOverlay} />}
+            </div>
           </div>
+          {!isAtBottom && (
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Scroll to latest messages"
+              className="bg-card absolute right-4 bottom-4 size-11 rounded-full shadow-md"
+              onClick={() => void scrollToBottom()}
+            >
+              <ArrowDown className="size-5" />
+            </Button>
+          )}
         </div>
 
         {isAssistant ? (

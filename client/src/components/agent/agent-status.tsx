@@ -32,13 +32,17 @@ export function AgentStatus() {
   const label = warming ? "Yukino is starting up…" : DOT_LABEL[status];
 
   return (
-    <div className="text-muted-foreground flex items-center gap-2 text-xs">
+    <div className="text-muted-foreground flex min-w-0 items-center gap-2 text-xs">
       {usage && (
         <span className="tabular-nums" title="Tokens in / out">
           {formatTokens(usage.inputTokens)}↑ {formatTokens(usage.outputTokens)}↓
         </span>
       )}
-      {model && <span className="hidden font-mono sm:inline">{model}</span>}
+      {model && (
+        <span className="hidden max-w-32 truncate font-mono sm:inline">
+          {model}
+        </span>
+      )}
       <Tooltip>
         <TooltipTrigger
           render={

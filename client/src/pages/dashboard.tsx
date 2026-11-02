@@ -97,10 +97,12 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="bg-background safe-pt safe-pb flex min-h-dvh flex-col gap-3 p-3 sm:p-6">
+    <div className="app-viewport bg-background flex flex-col gap-3 overflow-hidden p-3 pt-[max(0.75rem,env(safe-area-inset-top))] pr-[max(0.75rem,env(safe-area-inset-right))] pb-[max(0.75rem,env(safe-area-inset-bottom))] pl-[max(0.75rem,env(safe-area-inset-left))] sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h1 className="text-base font-semibold sm:text-lg">Cache Dashboard</h1>
+          <h1 className="text-base font-semibold sm:text-lg">
+            Cache Dashboard
+          </h1>
           <span className="text-muted-foreground text-xs tabular-nums">
             <NumberFlow value={rows.length} /> entries across {groups.length}{" "}
             groups

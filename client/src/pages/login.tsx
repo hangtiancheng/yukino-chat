@@ -143,7 +143,7 @@ export default function Login() {
               </button>
               <button
                 type="button"
-                className="text-primary cursor-pointer text-sm hover:underline"
+                className="text-primary-ink cursor-pointer text-sm hover:underline"
                 onClick={() => navigate("/register")}
               >
                 Register

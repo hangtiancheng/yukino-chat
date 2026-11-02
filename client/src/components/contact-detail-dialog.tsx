@@ -13,7 +13,7 @@ import type { ContactInfo } from "@/service/schemas";
 const linkOptions = {
   target: "_blank",
   rel: "noreferrer",
-  className: "text-primary underline underline-offset-2",
+  className: "text-primary-ink underline underline-offset-2",
 };
 
 function InfoRow({ label, value }: { label: string; value: string | number }) {

@@ -65,7 +65,7 @@ function ToolIcon({ name, className }: { name: string; className?: string }) {
 
 function StreamBlock({ item }: { item: AgentStreamItem }) {
   return (
-    <div className="border-border bg-card text-foreground max-w-[85%] rounded-2xl rounded-bl-md border px-3.5 py-2.5 text-sm leading-relaxed wrap-break-word shadow-sm sm:max-w-[70%]">
+    <div className="border-border bg-card text-foreground max-w-full min-w-0 rounded-2xl rounded-bl-md border px-3.5 py-2.5 text-sm leading-relaxed wrap-anywhere shadow-sm sm:max-w-[85%]">
       <Suspense
         fallback={<p className="whitespace-pre-wrap">{item.content}</p>}
       >
@@ -83,7 +83,7 @@ function ThinkingBlock({ item }: { item: AgentThinkingItem }) {
     <Collapsible>
       <CollapsibleTrigger
         className={cn(
-          "text-muted-foreground hover:text-foreground group flex w-full items-center gap-1.5 text-left text-xs",
+          "text-muted-foreground hover:text-foreground group flex min-h-11 w-full items-center gap-1.5 text-left text-xs md:min-h-8",
           "cursor-pointer",
         )}
       >
@@ -94,7 +94,7 @@ function ThinkingBlock({ item }: { item: AgentThinkingItem }) {
         </span>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <p className="text-muted-foreground border-border mt-1.5 ml-2 border-l pl-3 text-xs whitespace-pre-wrap italic">
+        <p className="text-muted-foreground border-border mt-1.5 ml-2 border-l pl-3 text-xs wrap-anywhere whitespace-pre-wrap italic">
           {item.content}
         </p>
       </CollapsibleContent>
@@ -110,8 +110,8 @@ function ToolBlock({ item }: { item: AgentToolItem }) {
       : item.output;
 
   return (
-    <Collapsible className="border-border bg-card/60 max-w-full rounded-lg border sm:max-w-[85%]">
-      <CollapsibleTrigger className="group flex w-full cursor-pointer items-center gap-2 px-2.5 py-1.5 text-left">
+    <Collapsible className="border-border bg-card/60 max-w-full min-w-0 rounded-lg border sm:max-w-[85%]">
+      <CollapsibleTrigger className="group flex min-h-11 w-full min-w-0 cursor-pointer items-center gap-2 px-2.5 py-1.5 text-left md:min-h-8">
         <ChevronRight className="text-muted-foreground size-3 shrink-0 transition-transform group-data-panel-open:rotate-90" />
         <ToolIcon
           name={item.toolName}
@@ -121,7 +121,7 @@ function ToolBlock({ item }: { item: AgentToolItem }) {
           {item.toolName}
         </span>
         {preview && (
-          <span className="text-muted-foreground truncate font-mono text-xs">
+          <span className="text-muted-foreground min-w-0 flex-1 truncate font-mono text-xs">
             {preview}
           </span>
         )}
@@ -191,7 +191,9 @@ function NoticeBlock({ item }: { item: AgentNoticeItem }) {
           </Suspense>
         </div>
       ) : (
-        <span className="whitespace-pre-wrap">{item.content}</span>
+        <span className="min-w-0 wrap-anywhere whitespace-pre-wrap">
+          {item.content}
+        </span>
       )}
     </div>
   );
@@ -217,7 +219,7 @@ export function AgentItemView({ item }: { item: AgentItem }) {
 export function AgentItemList({ items }: { items: AgentItem[] }) {
   if (items.length === 0) return null;
   return (
-    <div className="mt-4 flex flex-col gap-2 pl-2 sm:pl-11">
+    <div className="mt-4 flex min-w-0 flex-col gap-2 sm:pl-11">
       {items.map((item) => (
         <AgentItemView key={item.id} item={item} />
       ))}

@@ -55,10 +55,10 @@ export function AgentQuestionCard({ item }: { item: AgentQuestionItem }) {
   return (
     <section
       aria-label="Question from Yukino"
-      className="border-primary/30 bg-card max-w-full rounded-lg border px-3 py-2.5 shadow-sm sm:max-w-[85%]"
+      className="border-primary/30 bg-card max-w-full min-w-0 rounded-lg border px-3 py-2.5 wrap-anywhere shadow-sm sm:max-w-[85%]"
     >
       <div className="text-foreground flex items-center gap-1.5 text-xs font-semibold">
-        <HelpCircle className="text-primary size-3.5" />
+        <HelpCircle className="text-primary-ink size-3.5" />
         Yukino needs your input
       </div>
 
@@ -89,7 +89,7 @@ interface QuestionRowProps {
 function QuestionRow({ question, draft, onChange }: QuestionRowProps) {
   const rowClass = (active: boolean) =>
     cn(
-      "flex cursor-pointer items-start gap-2 rounded-md border px-2 py-1.5 transition-colors",
+      "flex min-h-11 cursor-pointer items-start gap-2 rounded-md border px-2 py-2.5 transition-colors md:min-h-0 md:py-1.5",
       active
         ? "border-primary/40 bg-primary/5"
         : "border-transparent hover:bg-muted/60",
@@ -124,7 +124,7 @@ function QuestionRow({ question, draft, onChange }: QuestionRowProps) {
   );
 
   return (
-    <fieldset className="mt-2">
+    <fieldset className="mt-2 min-w-0">
       <legend className="text-foreground mb-1 text-xs font-medium">
         {question.question || question.header}
         {question.multiSelect && (

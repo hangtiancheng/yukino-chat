@@ -155,7 +155,7 @@ export default function Manager() {
     groupRows.length > 0 && selectedGroups.length === groupRows.length;
 
   return (
-    <div className="safe-pb flex min-h-0 min-w-0 flex-1 flex-col gap-3 p-3 sm:p-4">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-hidden p-3 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-base font-semibold sm:text-lg">Administration</h2>
         <Button
@@ -168,13 +168,19 @@ export default function Manager() {
         </Button>
       </div>
 
-      <Tabs defaultValue="users" className="min-h-0 flex-1">
+      <Tabs
+        defaultValue="users"
+        className="min-h-0 min-w-0 flex-1 overflow-hidden"
+      >
         <TabsList className="w-full sm:w-64">
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="groups">Groups</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="users" className="flex min-h-0 flex-col gap-2">
+        <TabsContent
+          value="users"
+          className="flex min-h-0 flex-1 flex-col gap-2"
+        >
           <SelectionBar count={selectedUsers.length}>
             <Button
               size="sm"
@@ -304,7 +310,10 @@ export default function Manager() {
           </div>
         </TabsContent>
 
-        <TabsContent value="groups" className="flex min-h-0 flex-col gap-2">
+        <TabsContent
+          value="groups"
+          className="flex min-h-0 flex-1 flex-col gap-2"
+        >
           <SelectionBar count={selectedGroups.length}>
             <Button
               size="sm"

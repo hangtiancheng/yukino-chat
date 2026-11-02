@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { staticUrl } from "@/env";
+import { useIsTouch } from "@/lib/use-is-mobile";
 import { cn } from "@/lib/utils";
 import type { SlashCommand } from "@/service/agent-schemas";
 import { MessageType } from "@/service/schemas";
@@ -111,6 +112,8 @@ export function MessageComposer({
   placeholder = "Type a message — markdown supported",
 }: MessageComposerProps) {
   const [progress, setProgress] = useState<UploadProgress | null>(null);
+  const isTouch = useIsTouch();
+  const sendOnEnterRef = useRef(!isTouch);
   const sendRef = useRef<() => void>(() => {});
   const menuKeyRef = useRef<(event: KeyboardEvent) => boolean>(() => false);
 
@@ -134,11 +137,19 @@ export function MessageComposer({
     editorProps: {
       attributes: {
         class:
-          "min-h-11 max-h-36 overflow-y-auto px-3 py-2.5 text-sm leading-relaxed outline-none sm:min-h-24 sm:max-h-32",
+          "min-h-12 max-h-[min(10rem,calc(var(--app-height,100dvh)*0.25))] overflow-y-auto overscroll-contain px-3 py-3 text-base leading-relaxed wrap-anywhere outline-none md:min-h-16 md:text-sm",
+        role: "textbox",
+        "aria-label": "Message",
+        "aria-multiline": "true",
       },
       handleKeyDown: (_view, event) => {
+        if (event.isComposing || event.keyCode === 229) return false;
         if (menuKeyRef.current(event)) return true;
-        if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+        if (
+          sendOnEnterRef.current &&
+          event.key === "Enter" &&
+          !event.shiftKey
+        ) {
           event.preventDefault();
           sendRef.current();
           return true;
@@ -147,6 +158,10 @@ export function MessageComposer({
       },
     },
   });
+
+  useEffect(() => {
+    editor?.setEditable(!disabled);
+  }, [editor, disabled]);
 
   const isEmpty = useEditorState({
     editor,
@@ -207,7 +222,7 @@ export function MessageComposer({
   }, [query, matches.length, rowVirtualizer]);
 
   const sendText = () => {
-    if (!editor) return;
+    if (!editor || disabled) return;
     const value = editor.getText({ blockSeparator: "\n\n" }).trim();
     if (!value) return;
     onSend({
@@ -222,6 +237,7 @@ export function MessageComposer({
   };
 
   useEffect(() => {
+    sendOnEnterRef.current = !isTouch;
     sendRef.current = sendText;
     menuKeyRef.current = (event) => {
       if (!menuOpen) return false;
@@ -275,7 +291,7 @@ export function MessageComposer({
     <div
       {...dropProps}
       className={cn(
-        "border-border bg-card relative flex flex-col border-t",
+        "border-border bg-card relative flex min-w-0 shrink-0 flex-col border-t px-2 pt-2 sm:px-4 sm:pt-3",
         isDragActive && "ring-primary/50 ring-2 ring-inset",
       )}
     >
@@ -287,7 +303,7 @@ export function MessageComposer({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="bg-primary/5 text-primary pointer-events-none absolute inset-0 z-10 flex items-center justify-center text-sm font-medium"
+            className="bg-primary/5 text-primary-ink pointer-events-none absolute inset-0 z-10 flex items-center justify-center text-sm font-medium"
           >
             Drop a file to send
           </motion.div>
@@ -299,7 +315,7 @@ export function MessageComposer({
           ref={menuRef}
           role="listbox"
           aria-label="Slash commands"
-          className="border-border bg-popover absolute bottom-full left-2 z-20 mb-1 max-h-60 w-80 max-w-[calc(100vw-1rem)] overflow-y-auto rounded-lg border p-1 shadow-md"
+          className="border-border bg-popover absolute bottom-full left-2 z-20 mb-1 max-h-[min(15rem,calc(var(--app-height,100dvh)*0.4))] w-80 max-w-[calc(100%-1rem)] overflow-y-auto overscroll-contain rounded-xl border p-1 shadow-lg"
         >
           <div
             className="relative w-full"
@@ -321,7 +337,7 @@ export function MessageComposer({
                   }}
                   onMouseEnter={() => setPick({ query, index: row.index })}
                   className={cn(
-                    "absolute top-0 left-0 flex w-full cursor-pointer flex-col items-start gap-0.5 rounded-md px-2 py-1.5 text-left",
+                    "absolute top-0 left-0 flex min-h-11 w-full cursor-pointer flex-col items-start gap-0.5 rounded-md px-2 py-1.5 text-left",
                     row.index === active && "bg-accent",
                   )}
                   style={{ transform: `translateY(${row.start}px)` }}
@@ -341,10 +357,10 @@ export function MessageComposer({
         </div>
       )}
 
-      <div className="relative">
+      <div className="bg-muted/40 focus-within:border-ring/50 relative rounded-xl border border-transparent transition-colors">
         <EditorContent editor={editor} />
         {isEmpty && (
-          <span className="text-muted-foreground/50 pointer-events-none absolute top-2.5 left-3 text-sm">
+          <span className="text-muted-foreground/70 pointer-events-none absolute top-3 right-3 left-3 line-clamp-1 text-base md:text-sm">
             {placeholder}
           </span>
         )}
@@ -363,7 +379,7 @@ export function MessageComposer({
         </div>
       )}
 
-      <div className="flex items-center justify-between px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+      <div className="flex items-center justify-between gap-2 pt-1 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         <div className="flex items-center gap-1">
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -371,20 +387,24 @@ export function MessageComposer({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-muted-foreground size-9 md:size-8"
+                  className="text-muted-foreground size-11 md:size-8"
                   aria-label="Insert emoji"
+                  disabled={disabled}
                 />
               }
             >
               <Smile className="size-4" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-64 max-w-[calc(100vw-2rem)] p-2">
+            <DropdownMenuContent
+              align="start"
+              className="w-64 max-w-[calc(100vw-2rem)] p-2"
+            >
               <div className="grid grid-cols-8 gap-1">
                 {EMOJIS.map((emoji) => (
                   <button
                     key={emoji}
                     type="button"
-                    className="hover:bg-accent cursor-pointer rounded-md p-1 text-lg leading-none"
+                    className="hover:bg-accent flex min-h-9 cursor-pointer items-center justify-center rounded-md text-xl leading-none"
                     onClick={() => insertEmoji(emoji)}
                   >
                     {emoji}
@@ -398,7 +418,7 @@ export function MessageComposer({
             <Button
               variant="ghost"
               size="icon"
-              className="text-muted-foreground size-9 md:size-8"
+              className="text-muted-foreground size-11 md:size-8"
               aria-label="Attach a file"
               disabled={disabled || upload.isPending}
               onClick={open}
@@ -408,12 +428,16 @@ export function MessageComposer({
           )}
         </div>
 
+        <span className="text-muted-foreground/70 hidden flex-1 text-right text-[11px] lg:block pointer-coarse:hidden">
+          Enter to send · Shift+Enter for a new line
+        </span>
+
         <div className="flex items-center gap-1.5">
           {streaming && onStop && (
             <Button
               size="sm"
               variant="outline"
-              className="h-9 px-3 md:h-8 md:px-2.5"
+              className="h-11 px-3 md:h-8 md:px-2.5"
               onClick={onStop}
             >
               <Square className="size-3.5" />
@@ -422,7 +446,7 @@ export function MessageComposer({
           )}
           <Button
             size="sm"
-            className="h-9 px-3 md:h-8 md:px-2.5"
+            className="h-11 rounded-xl px-4 md:h-8 md:rounded-lg md:px-3"
             disabled={disabled || isEmpty}
             onClick={sendText}
           >

@@ -1,7 +1,7 @@
 import NumberFlow from "@number-flow/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { groupBy, sortBy } from "es-toolkit";
-import { ChevronDown, MoreHorizontal, Plus } from "lucide-react";
+import { ChevronDown, MoreHorizontal, Plus, Search } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -54,7 +54,7 @@ interface SectionProps {
 function Section({ title, count, open, onOpenChange, children }: SectionProps) {
   return (
     <Collapsible open={open} onOpenChange={onOpenChange}>
-      <CollapsibleTrigger className="border-border bg-muted/30 hover:bg-accent/50 flex w-full cursor-pointer items-center justify-between border-b px-3 py-2.5 text-sm font-medium transition-colors">
+      <CollapsibleTrigger className="hover:bg-accent/50 focus-visible:ring-ring flex min-h-11 w-full cursor-pointer items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-inset">
         <span>
           {title}
           <span className="text-muted-foreground ml-2 text-xs font-normal tabular-nums">
@@ -91,15 +91,15 @@ function Row({ name, avatar, online, trailing, onClick }: RowProps) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
-      className="group hover:bg-accent/60 flex items-center justify-between gap-2 px-3 py-2 transition-colors"
+      className="group hover:bg-accent/60 flex items-center justify-between gap-2 rounded-xl px-3 py-1 transition-colors"
     >
       <button
         type="button"
         onClick={onClick}
-        className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left"
+        className="focus-visible:ring-ring flex min-h-14 min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-lg py-2 text-left outline-none focus-visible:ring-2 md:min-h-11 md:gap-2"
       >
         <span className="relative shrink-0">
-          <Avatar className="size-7">
+          <Avatar className="size-10 rounded-xl md:size-8">
             <AvatarImage src={avatar} alt={name} />
             <AvatarFallback className="text-[10px]">
               {name.charAt(0).toUpperCase() || "?"}
@@ -191,52 +191,58 @@ export function ContactSidebar() {
   );
 
   return (
-    <div className="flex h-full w-full flex-col">
-      <div className="flex items-center gap-1 p-2">
-        <Input
-          className="flex-1"
-          placeholder="Search users and groups"
-          aria-label="Search users and groups"
-          value={keyword}
-          onChange={(event) => setKeyword(event.target.value)}
-        />
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                variant="outline"
-                size="icon"
-                className="rounded-md size-9 md:size-8"
-                aria-label="Add contact or group"
-              />
-            }
-          >
-            <Plus className="size-4" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44">
-            <DropdownMenuItem
-              className="text-sm"
-              onClick={() => setAddOpen(true)}
+    <div className="flex h-full min-h-0 w-full flex-col">
+      <div className="shrink-0 px-4 pt-5 pb-3 md:pt-4">
+        <div className="mb-4 flex items-center justify-between gap-2">
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight">Contacts</h1>
+            <p className="text-muted-foreground mt-1 text-xs">
+              Friends, groups, and new connections.
+            </p>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="size-11 rounded-xl md:size-9"
+                  aria-label="Add contact or group"
+                />
+              }
             >
-              Add Contact / Group
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-sm"
-              onClick={() => setCreateOpen(true)}
-            >
-              Create Group
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-sm"
-              onClick={() => setRequestsOpen(true)}
-            >
-              Friend Requests
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <Plus className="size-5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => setAddOpen(true)}>
+                Add Contact / Group
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setCreateOpen(true)}>
+                Create Group
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setRequestsOpen(true)}>
+                Friend Requests
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <div className="relative">
+          <Search
+            aria-hidden="true"
+            className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+          />
+          <Input
+            type="search"
+            className="bg-muted/50 rounded-xl border-transparent pl-9"
+            placeholder="Search users and groups"
+            aria-label="Search users and groups"
+            value={keyword}
+            onChange={(event) => setKeyword(event.target.value)}
+          />
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-3">
         {searching ? (
           <div className="flex flex-col">
             <p className="text-muted-foreground border-border bg-muted/30 border-b px-3 py-2 text-xs">
@@ -332,7 +338,7 @@ export function ContactSidebar() {
                                       variant="ghost"
                                       size="icon"
                                       aria-label={`Options for ${friend.nickname}`}
-                                      className="text-muted-foreground size-8 opacity-0 transition-opacity group-hover:opacity-100 pointer-coarse:opacity-100 md:size-6"
+                                      className="text-muted-foreground size-11 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 md:size-7 md:opacity-0 pointer-coarse:opacity-100"
                                     />
                                   }
                                 >

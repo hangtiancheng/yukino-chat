@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { Command } from "cmdk";
-import { MessageSquare, Settings, User, Users } from "lucide-react";
+import { MessageSquare, Settings, User, Users, X } from "lucide-react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useNavigate } from "react-router-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   friendsQuery,
   groupSessionsQuery,
@@ -57,13 +58,24 @@ export function CommandPalette() {
       label="Search conversations and contacts"
       loop
       overlayClassName="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm data-[state=open]:animate-in data-[state=open]:fade-in-0"
-      contentClassName="bg-popover text-popover-foreground border-border data-[state=open]:animate-in data-[state=open]:fade-in-0 fixed z-50 w-full overflow-hidden border shadow-2xl safe-pt inset-x-0 top-0 translate-x-0 rounded-none rounded-b-2xl data-[state=open]:slide-in-from-top sm:inset-x-auto sm:top-1/4 sm:left-1/2 sm:max-w-lg sm:-translate-x-1/2 sm:rounded-xl sm:data-[state=open]:slide-in-from-top-0 sm:data-[state=open]:zoom-in-95"
+      contentClassName="bg-popover text-popover-foreground border-border data-[state=open]:animate-in data-[state=open]:fade-in-0 fixed z-50 flex max-h-[var(--app-height,100dvh)] w-full flex-col overflow-hidden border shadow-2xl safe-pt inset-x-0 top-[var(--app-offset-top,0px)] translate-x-0 rounded-none rounded-b-2xl data-[state=open]:slide-in-from-top sm:inset-x-auto sm:top-[calc(var(--app-offset-top,0px)+2rem)] sm:left-1/2 sm:max-h-[calc(var(--app-height,100dvh)-4rem)] sm:max-w-lg sm:-translate-x-1/2 sm:rounded-xl sm:data-[state=open]:slide-in-from-top-0 sm:data-[state=open]:zoom-in-95"
     >
-      <Command.Input
-        placeholder="Jump to a conversation, contact or page…"
-        className="border-border placeholder:text-muted-foreground/60 w-full border-b bg-transparent px-4 py-3 text-base outline-none sm:text-sm"
-      />
-      <Command.List className="max-h-[60dvh] overflow-y-auto overscroll-contain p-2 sm:max-h-80">
+      <div className="border-border flex shrink-0 items-center gap-1 border-b pr-2">
+        <Command.Input
+          placeholder="Jump to a conversation, contact or page…"
+          className="placeholder:text-muted-foreground/60 min-w-0 flex-1 bg-transparent px-4 py-4 text-base outline-none md:text-sm"
+        />
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Close search"
+          className="size-11 md:size-8"
+          onClick={() => setOpen(false)}
+        >
+          <X className="size-4" />
+        </Button>
+      </div>
+      <Command.List className="max-h-[60dvh] min-h-0 overflow-y-auto overscroll-contain p-2 sm:max-h-80">
         <Command.Empty className="text-muted-foreground py-6 text-center text-sm">
           No results found
         </Command.Empty>

@@ -55,9 +55,9 @@ function DialogContent({
         className={cn(
           // Mobile (<sm): full-width bottom sheet. Desktop (sm+): centered modal.
           "bg-popover text-popover-foreground ring-foreground/10 fixed z-50 grid w-full gap-4 text-sm ring-1 duration-100 outline-none " +
-            "inset-x-0 bottom-0 top-auto max-h-[92dvh] translate-x-0 translate-y-0 overflow-y-auto rounded-t-2xl rounded-b-none p-4 pb-[max(1rem,env(safe-area-inset-bottom))] " +
+            "inset-x-0 top-auto bottom-[var(--app-viewport-bottom,0px)] max-h-[calc(var(--app-height,100dvh)-max(1rem,env(safe-area-inset-top)))] min-w-0 translate-x-0 translate-y-0 grid-cols-[minmax(0,1fr)] overflow-y-auto overscroll-contain rounded-t-2xl rounded-b-none p-5 pr-[max(1.25rem,env(safe-area-inset-right))] pb-[max(1.25rem,env(safe-area-inset-bottom))] pl-[max(1.25rem,env(safe-area-inset-left))] " +
             "data-open:animate-in data-open:slide-in-from-bottom data-closed:animate-out data-closed:slide-out-to-bottom " +
-            "sm:inset-x-auto sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:max-h-[85dvh] sm:max-w-sm sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:pb-4 " +
+            "sm:inset-x-auto sm:top-[calc(var(--app-offset-top,0px)+var(--app-height,100dvh)/2)] sm:bottom-auto sm:left-1/2 sm:max-h-[calc(var(--app-height,100dvh)-2rem)] sm:max-w-sm sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:p-4 " +
             "sm:data-open:slide-in-from-bottom-0 sm:data-open:fade-in-0 sm:data-open:zoom-in-95 sm:data-closed:slide-out-to-bottom-0 sm:data-closed:fade-out-0 sm:data-closed:zoom-out-95",
           className,
         )}
@@ -70,7 +70,7 @@ function DialogContent({
             render={
               <Button
                 variant="ghost"
-                className="absolute top-2 right-2"
+                className="absolute top-2 right-2 size-11 sm:size-8"
                 size="icon-sm"
               />
             }
@@ -88,7 +88,10 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn("flex flex-col gap-2", className)}
+      className={cn(
+        "flex min-w-0 flex-col gap-2 pr-9 wrap-anywhere",
+        className,
+      )}
       {...props}
     />
   );
@@ -108,7 +111,7 @@ function DialogFooter({
       className={cn(
         // Mobile: inset footer card (content already reserves safe-area space).
         // Desktop: bleed to the modal edges exactly like before.
-        "bg-muted/50 flex flex-col-reverse gap-2 rounded-lg border-t p-4 sm:flex-row sm:justify-end sm:-mx-4 sm:-mb-4 sm:rounded-none sm:rounded-b-xl",
+        "bg-muted/50 flex flex-col-reverse gap-2 rounded-xl border-t p-3 sm:-mx-4 sm:-mb-4 sm:flex-row sm:flex-wrap sm:justify-end sm:rounded-none sm:rounded-b-xl sm:p-4 [&_[data-slot=button]]:min-h-11 sm:[&_[data-slot=button]]:min-h-0",
         className,
       )}
       {...props}

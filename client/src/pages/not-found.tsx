@@ -22,7 +22,7 @@ export default function NotFound() {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
       >
-        <h1 className="text-primary/20 text-8xl font-bold">404</h1>
+        <h1 className="text-primary-ink/20 text-8xl font-bold">404</h1>
         <p className="text-muted-foreground mt-4">Page not found</p>
         <Button className="mt-8" onClick={() => navigate("/login")}>
           Back to Home

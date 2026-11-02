@@ -216,7 +216,7 @@ export function CallDialog() {
           </div>
         )}
 
-        <div className="flex justify-center gap-2">
+        <div className="flex flex-wrap justify-center gap-2">
           {phase === "ringing" ? (
             <>
               <Button size="sm" onClick={accept}>

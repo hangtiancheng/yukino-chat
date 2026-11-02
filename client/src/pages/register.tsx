@@ -157,7 +157,7 @@ export default function Register() {
             <div className="flex w-full justify-end">
               <button
                 type="button"
-                className="text-primary cursor-pointer text-sm hover:underline"
+                className="text-primary-ink cursor-pointer text-sm hover:underline"
                 onClick={() => navigate("/login")}
               >
                 Back to sign in

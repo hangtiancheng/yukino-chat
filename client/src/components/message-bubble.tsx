@@ -60,22 +60,22 @@ function FileAttachment({
   const fileName = message.file_name || "file";
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex max-w-full min-w-0 items-center gap-3">
       <span
         className={cn(
           "flex size-10 shrink-0 items-center justify-center rounded-xl",
           isSelf
             ? "bg-primary-foreground/15 text-primary-foreground"
-            : "bg-muted text-primary",
+            : "bg-muted text-primary-ink",
         )}
       >
         <FileText className="size-5" />
       </span>
-      <div className="flex min-w-0 flex-col items-start gap-1.5">
-        <div className="flex min-w-0 items-center gap-2">
+      <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5">
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <span
             className={cn(
-              "truncate text-sm font-medium",
+              "max-w-full min-w-0 truncate text-sm font-medium",
               isSelf ? "text-primary-foreground" : "text-foreground",
             )}
           >
@@ -189,7 +189,7 @@ export function MessageBubble({
             >
               <Avatar
                 className={cn(
-                  "size-9 transition-transform duration-300 hover:scale-105",
+                  "size-8 shrink-0 transition-transform duration-300 hover:scale-105 sm:size-9",
                   isSelf && "ring-primary/30 ring-2",
                 )}
               >
@@ -199,22 +199,22 @@ export function MessageBubble({
 
               <div
                 className={cn(
-                  "flex max-w-[85%] min-w-0 flex-col gap-1 sm:max-w-[70%]",
+                  "flex max-w-[calc(100%-2.625rem)] min-w-0 flex-col gap-1 sm:max-w-[75%] lg:max-w-[70%]",
                   isSelf ? "items-end" : "items-start",
                 )}
               >
-                <span className="text-muted-foreground flex items-baseline gap-2 px-1 text-xs">
-                  <span className="font-medium">{name}</span>
-                  <span className="tabular-nums opacity-70">
+                <span className="text-muted-foreground flex max-w-full min-w-0 items-baseline gap-2 px-1 text-[11px] sm:text-xs">
+                  <span className="truncate font-medium">{name}</span>
+                  <span className="shrink-0 tabular-nums opacity-70">
                     {formatMessageTime(message.created_at)}
                   </span>
                 </span>
 
                 <div
                   className={cn(
-                    "max-w-full rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed wrap-break-word transition-shadow duration-300",
+                    "max-w-full min-w-0 rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed wrap-anywhere transition-shadow duration-300",
                     isSelf
-                      ? "bg-primary text-primary-foreground hover:shadow-primary/20 **:data-[streamdown=link]:text-primary-foreground rounded-br-md hover:shadow-md"
+                      ? "bg-primary text-primary-foreground hover:shadow-primary/20 rounded-br-md [--message-link-color:var(--primary-foreground)] hover:shadow-md"
                       : "border-border bg-card text-foreground rounded-bl-md border shadow-sm hover:shadow-md",
                   )}
                 >

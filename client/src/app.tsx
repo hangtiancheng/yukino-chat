@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 
 import { AppShell } from "@/components/app-shell";
+import { useVisualViewport } from "@/lib/use-visual-viewport";
 import { errorMessage } from "@/service/http";
 import useAuthStore, { isAuthenticated } from "./store/auth";
 import useWsStore from "./store/ws";
@@ -67,6 +68,7 @@ const router = createBrowserRouter([
 ]);
 
 export default function App() {
+  useVisualViewport();
   const userId = useAuthStore((state) => state.userInfo.uuid);
 
   useEffect(() => {
