@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { sentryPlugin } from "@yukino.js/sentry/vite";
 import { fileURLToPath } from "node:url";
 import { VitePWA } from "vite-plugin-pwa";
-import { resolve, join } from "node:path";
+import { basename, resolve, join } from "node:path";
 import { mkdirSync, readdirSync, renameSync } from "node:fs";
 function moveSourcemaps(): Plugin {
   let outDir = "dist";
@@ -31,7 +31,7 @@ function moveSourcemaps(): Plugin {
       if (mapFiles.length === 0) return;
       mkdirSync(mapDir, { recursive: true });
       for (const file of mapFiles) {
-        renameSync(file, join(mapDir, file.slice(file.lastIndexOf("/") + 1)));
+        renameSync(file, join(mapDir, basename(file)));
       }
       this.info(`moved ${mapFiles.length} sourcemap file(s) to ${mapDir}`);
     },
