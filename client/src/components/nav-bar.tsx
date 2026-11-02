@@ -2,17 +2,14 @@ import {
   ChartBar,
   LogOut,
   MessageSquare,
-  Moon,
   MoreHorizontal,
   Search,
   Settings,
-  Sun,
   User,
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { motion } from "motion/react";
-import { useTheme } from "@/store/theme";
 import { useLocation, useMatch, useNavigate } from "react-router-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -151,11 +148,9 @@ export function NavBar() {
     !["sessions", "contacts", "profile"].includes(chatRoute.params.id ?? ""),
   );
   const userInfo = useAuthStore((state) => state.userInfo);
-  const { resolvedTheme, setTheme } = useTheme();
   const togglePalette = useUiStore((state) => state.togglePalette);
 
   const current = activeSection(pathname);
-  const isDark = resolvedTheme === "dark";
   const isAdmin = userInfo.is_admin === 1;
 
   const signOut = async () => {
@@ -262,16 +257,6 @@ export function NavBar() {
               <DropdownMenuItem onClick={() => togglePalette()}>
                 <Search className="size-4" />
                 Search
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setTheme(isDark ? "light" : "dark")}
-              >
-                {isDark ? (
-                  <Sun className="size-4" />
-                ) : (
-                  <Moon className="size-4" />
-                )}
-                {isDark ? "Light mode" : "Dark mode"}
               </DropdownMenuItem>
               {isAdmin && (
                 <DropdownMenuItem onClick={() => navigate("/dashboard")}>

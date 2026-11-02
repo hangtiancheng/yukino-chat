@@ -2,6 +2,7 @@ import { create } from "zustand";
 
 import { isGroupId } from "@/service/schemas";
 import useWsStore from "@/store/ws";
+import { mediaErrorMessage } from "@/utils/media-error";
 import {
   CallManager,
   type CallKind,
@@ -84,9 +85,9 @@ const useCallStore = create<CallState>((set, get) => ({
       }
     }, NO_ANSWER_TIMEOUT_MS);
 
-    manager.dial(options).catch(() => {
+    manager.dial(options).catch((error: unknown) => {
       manager.hangUp();
-      showToast("Could not access your microphone or camera", "error");
+      showToast(mediaErrorMessage(error), "error");
     });
   },
 
@@ -95,9 +96,9 @@ const useCallStore = create<CallState>((set, get) => ({
     if (!incoming) return;
     clearNoAnswerTimer();
     set({ phase: "dialing", incoming: null });
-    manager.accept(incoming).catch(() => {
+    manager.accept(incoming).catch((error: unknown) => {
       manager.decline(incoming);
-      showToast("Could not access your microphone or camera", "error");
+      showToast(mediaErrorMessage(error), "error");
     });
   },
 

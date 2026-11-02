@@ -23,6 +23,9 @@ function toHex(bytes: Uint8Array): string {
   return hex;
 }
 
+const INSECURE_CONTEXT_MESSAGE =
+  "File upload requires a secure connection (HTTPS). Open this site over HTTPS and try again.";
+
 async function digest(data: ArrayBuffer): Promise<Uint8Array> {
   return new Uint8Array(await crypto.subtle.digest("SHA-256", data));
 }
@@ -44,6 +47,9 @@ async function hashFile(file: File, chunkSize: number): Promise<string> {
 self.onmessage = async (event: MessageEvent<HashRequest>) => {
   const { file, chunkSize } = event.data;
   try {
+    if (!globalThis.crypto?.subtle) {
+      throw new Error(INSECURE_CONTEXT_MESSAGE);
+    }
     self.postMessage({ kind: "done", hash: await hashFile(file, chunkSize) });
   } catch (error) {
     self.postMessage({

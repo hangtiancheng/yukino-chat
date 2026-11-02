@@ -1,6 +1,6 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImageUp, Monitor, Moon, Sun } from "lucide-react";
+import { ImageUp } from "lucide-react";
 import Linkify from "linkify-react";
 import { useState } from "react";
 import { useDropzone } from "react-dropzone";
@@ -25,7 +25,6 @@ import { profileSchema } from "@/lib/validation";
 import { message, user } from "@/service/api";
 import { keys, profileQuery } from "@/service/queries";
 import useAuthStore from "@/store/auth";
-import { useTheme, type Theme } from "@/store/theme";
 import { showToast } from "@/utils/toast";
 
 type ProfileValues = z.infer<typeof profileSchema>;
@@ -45,7 +44,6 @@ export default function OwnInfo() {
   const queryClient = useQueryClient();
   const storedUser = useAuthStore((state) => state.userInfo);
   const userId = storedUser.uuid;
-  const { theme, setTheme } = useTheme();
 
   const [editOpen, setEditOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
@@ -160,33 +158,6 @@ export default function OwnInfo() {
               >
                 {me.signature || "—"}
               </Linkify>
-            </div>
-          </div>
-
-          <div className="mt-5">
-            <p className="text-muted-foreground mb-2 text-xs">Appearance</p>
-            <div
-              role="group"
-              aria-label="Color theme"
-              className="bg-muted/60 grid grid-cols-3 gap-1 rounded-xl p-1"
-            >
-              {(
-                [
-                  { value: "light", label: "Light", icon: Sun },
-                  { value: "dark", label: "Dark", icon: Moon },
-                  { value: "system", label: "System", icon: Monitor },
-                ] satisfies { value: Theme; label: string; icon: typeof Sun }[]
-              ).map(({ value, label, icon: Icon }) => (
-                <Button
-                  key={value}
-                  variant={theme === value ? "secondary" : "ghost"}
-                  aria-pressed={theme === value}
-                  className="h-11 min-w-0 gap-1 px-1 text-xs"
-                  onClick={() => setTheme(value)}
-                >
-                  <Icon className="size-4" /> {label}
-                </Button>
-              ))}
             </div>
           </div>
 
