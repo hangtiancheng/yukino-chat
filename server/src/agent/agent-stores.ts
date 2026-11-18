@@ -1,4 +1,4 @@
-import type { Conversation } from "@yukino.js/yukino";
+import type { Message } from "@yukino.js/yukino";
 import type { PrismaDB } from "../database/prisma.js";
 
 interface AgentSessionRow {
@@ -10,7 +10,7 @@ interface AgentSessionRow {
 }
 
 export interface AgentContext {
-  messages: Conversation.Message[];
+  messages: Message[];
   /** Names of skills activated in the persisted conversation. */
   activeSkills: string[];
 }
@@ -40,8 +40,7 @@ export class AgentStores {
     });
     if (!row) return { messages: [], activeSkills: [] };
     const ctx = row.context as { messages?: unknown };
-    const messages =
-      ctx && Array.isArray(ctx.messages) ? (ctx.messages as Conversation.Message[]) : [];
+    const messages = ctx && Array.isArray(ctx.messages) ? (ctx.messages as Message[]) : [];
     const rawSkills = row.activeSkills as unknown;
     const activeSkills = Array.isArray(rawSkills)
       ? rawSkills.filter((name): name is string => typeof name === "string")
@@ -49,11 +48,7 @@ export class AgentStores {
     return { messages, activeSkills };
   }
 
-  async saveContext(
-    sessionId: string,
-    messages: Conversation.Message[],
-    activeSkills: string[],
-  ): Promise<void> {
+  async saveContext(sessionId: string, messages: Message[], activeSkills: string[]): Promise<void> {
     await this.db.agentSession
       .update({
         where: { id: sessionId },

@@ -1,10 +1,17 @@
-import { Config } from "@yukino.js/yukino";
+import {
+  type HookConfig,
+  loadConfig,
+  type MCPServerConfig,
+  memoryEnabled,
+  type ProviderConfig,
+  resolveDefaultProvider,
+} from "@yukino.js/yukino";
 import { env } from "../config/env.js";
 
 export interface AgentConfig {
-  provider: Config.ProviderConfig.ProviderConfig;
-  mcpServers: Config.MCPServerConfig[];
-  hooks: Config.HookConfig[];
+  provider: ProviderConfig;
+  mcpServers: MCPServerConfig[];
+  hooks: HookConfig[];
   /** Auto-memory switch from config `enable_memory` (defaults to enabled). */
   memoryEnabled: boolean;
   permissionMode: string;
@@ -20,14 +27,14 @@ export function loadAgentConfig(): AgentConfig | null {
 
 function resolve(): AgentConfig | null {
   try {
-    const cfg = Config.loadConfig("", { allowEmptyProviders: true });
+    const cfg = loadConfig("", { allowEmptyProviders: true });
     if (cfg.providers.length > 0) {
       return {
         // Honor `default_provider` (clamped, falls back to the first entry).
-        provider: Config.ProviderConfig.resolveDefaultProvider(cfg.providers, cfg.default_provider),
+        provider: resolveDefaultProvider(cfg.providers, cfg.default_provider),
         mcpServers: cfg.mcp_servers,
         hooks: cfg.hooks,
-        memoryEnabled: Config.memoryEnabled(cfg),
+        memoryEnabled: memoryEnabled(cfg),
         permissionMode: cfg.permission_mode ?? "default",
       };
     }

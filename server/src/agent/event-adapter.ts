@@ -1,6 +1,4 @@
-import type { Agent } from "@yukino.js/yukino";
-
-type AgentEvent = Agent.Events.AgentEvent;
+import type { AgentEvent } from "@yukino.js/yukino";
 
 export type AdapterAction =
   | { kind: "notify"; method: string; params: Record<string, unknown> }

@@ -1,15 +1,27 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import {
-  Bootstrap,
-  Commands,
-  Compact,
-  Permissions,
-  Remote,
-  Session,
-  Skills,
-  Subagent,
-  Utils,
+  type AgentDefinition,
+  AgentEventLogger,
+  type Command,
+  type CommandContext,
+  contentToText,
+  createRemoteAgent,
+  type EventLogger,
+  forceCompact,
+  LoadSkillTool,
+  PermissionChecker,
+  type PermissionMode,
+  parse as parseCommand,
+  type RemoteAgentHandle,
+  type RunCallbacks,
+  runFork,
+  runInline,
+  type SkillForkHost,
+  type SkillHost,
+  saveCompactBoundary,
+  spawnSubagent,
+  wireSkillsToRegistry,
 } from "@yukino.js/yukino";
 import { env } from "../config/env.js";
 import type { AgentStores } from "./agent-stores.js";
@@ -57,7 +69,7 @@ interface PromptJob {
   content: string;
 }
 
-type Handle = Remote.Server.RemoteAgentHandle;
+type Handle = RemoteAgentHandle;
 
 /**
  * No-pong threshold for the connection heartbeat: a socket that has not been
@@ -81,19 +93,19 @@ export class AgentRuntime {
   private readonly sink: ChatSink;
   private readonly broker = new InteractionBroker();
   private readonly connections = new Set<AgentConnection>();
-  private readonly describer: Permissions.PermissionChecker;
+  private readonly describer: PermissionChecker;
   /**
    * Structured JSONL log of degraded agent events (failed tool results,
    * retries, compaction, agent errors), keyed by user. Routine progress is
    * dropped. In a multi-user host an operator cannot watch every client, so
    * these are the server-side signals that a provider/MCP/tool is unhealthy.
    */
-  private readonly eventLogger: Remote.Log.AgentEventLogger;
+  private readonly eventLogger: AgentEventLogger;
 
   private handlePromise: Promise<Handle> | null = null;
   private handle: Handle | null = null;
   private sessionId = "";
-  private readonly permissionMode: Permissions.PermissionMode;
+  private readonly permissionMode: PermissionMode;
 
   private queue: PromptJob[] = [];
   private workerActive = false;
@@ -114,8 +126,8 @@ export class AgentRuntime {
     this.stores = options.stores;
     this.sink = options.sink;
     this.permissionMode = normalizeMode(options.config.permissionMode);
-    this.describer = new Permissions.PermissionChecker(this.workDir, this.permissionMode);
-    this.eventLogger = new Remote.Log.AgentEventLogger(consoleEventLogger(this.userId));
+    this.describer = new PermissionChecker(this.workDir, this.permissionMode);
+    this.eventLogger = new AgentEventLogger(consoleEventLogger(this.userId));
   }
 
   private ensureReady(): Promise<Handle> {
@@ -124,14 +136,13 @@ export class AgentRuntime {
       const row = await this.stores.getOrCreateSession(this.userId, this.permissionMode);
       this.sessionId = row.id;
       await mkdir(this.workDir, { recursive: true });
-      const handle = await Remote.Server.createRemoteAgent({
+      const handle = await createRemoteAgent({
         provider: this.config.provider,
         cwd: this.workDir,
         mcpServers: this.config.mcpServers,
         hooks: this.config.hooks,
         memoryEnabled: this.config.memoryEnabled,
         enableCoordinatorMode: false,
-        forkDisabled: false,
         askUser: (questions) => this.askUser(questions),
       });
       this.handle = handle;
@@ -170,7 +181,7 @@ export class AgentRuntime {
     // skills stay read-only like the rest of the chat agent.
     handle.registry.unregister("LoadSkill");
     handle.registry.register(
-      new Skills.LoadSkillTool.LoadSkillTool(
+      new LoadSkillTool(
         catalog,
         this.skillHost(handle),
         this.buildForkHost(handle, null, this.makePermissionCallback()),
@@ -194,7 +205,7 @@ export class AgentRuntime {
     // post-compaction context restore keeps their SOPs.
     for (const name of activeSkills) {
       const skill = handle.skillCatalog?.get(name);
-      if (skill) Skills.Executor.runInline(skill, "", this.skillHost(handle));
+      if (skill) runInline(skill, "", this.skillHost(handle));
     }
   }
 
@@ -326,7 +337,7 @@ export class AgentRuntime {
 
     // Remote parity: "/path/to/file" parses as no command (names never contain
     // "/") and must run as a plain user message, not an unknown-command error.
-    if (job.content.startsWith("/") && Commands.Commands.parse(job.content) !== null) {
+    if (job.content.startsWith("/") && parseCommand(job.content) !== null) {
       await this.handleCommand(handle, job);
       return;
     }
@@ -342,7 +353,7 @@ export class AgentRuntime {
 
     const adapter = new EventAdapter(() => (Date.now() - this.turnStartedAt) / 1000);
     this.activeAdapter = adapter;
-    const callbacks: Remote.Server.RunCallbacks = {
+    const callbacks: RunCallbacks = {
       onPermissionRequest: this.makePermissionCallback(),
     };
 
@@ -387,7 +398,7 @@ export class AgentRuntime {
    * executed, everything else gets a friendly rejection.
    */
   private async handleCommand(handle: Handle, job: PromptJob) {
-    const parsed = Commands.Commands.parse(job.content);
+    const parsed = parseCommand(job.content);
     if (!parsed) {
       this.notifyAll("agent/error", {
         message: `Unknown command: ${job.content.split(/\s+/u)[0]} — type /help to see available commands`,
@@ -437,7 +448,7 @@ export class AgentRuntime {
   }
 
   /** Commands the chat host can actually serve (multi-user safe subset). */
-  private isChatCommand(cmd: Commands.Commands.Command): boolean {
+  private isChatCommand(cmd: Command): boolean {
     switch (cmd.type) {
       case "local":
         return CHAT_LOCAL_COMMANDS.has(cmd.name.toLowerCase());
@@ -500,7 +511,7 @@ export class AgentRuntime {
           handle.toolFilter ?? undefined,
         );
         try {
-          const result = await Compact.Compact.forceCompact(
+          const result = await forceCompact(
             handle.conv,
             handle.client,
             handle.recoveryState,
@@ -511,7 +522,7 @@ export class AgentRuntime {
             args,
           );
           if (result.boundary) {
-            Session.saveCompactBoundary(handle.cwd, handle.sessionId, result.boundary);
+            saveCompactBoundary(handle.cwd, handle.sessionId, result.boundary);
           }
           this.notifyAll("agent/compact", { message: result.message });
         } catch (err) {
@@ -533,7 +544,7 @@ export class AgentRuntime {
     }
   }
 
-  private buildCommandContext(handle: Handle, args: string): Commands.Commands.CommandContext {
+  private buildCommandContext(handle: Handle, args: string): CommandContext {
     return {
       cwd: handle.cwd,
       args,
@@ -560,15 +571,11 @@ export class AgentRuntime {
     const catalog = handle.skillCatalog;
     if (!catalog?.needsReload()) return;
     catalog.reload();
-    Bootstrap.ToolRegistry.wireSkillsToRegistry(
-      catalog,
-      handle.cmdRegistry,
-      this.skillHost(handle),
-    );
+    wireSkillsToRegistry(catalog, handle.cmdRegistry, this.skillHost(handle));
     this.notifyAll("session/commands", { commands: this.commandList(handle) });
   }
 
-  private skillHost(handle: Handle): Skills.SkillHost {
+  private skillHost(handle: Handle): SkillHost {
     return {
       activateSkill: (name, body) => {
         handle.activeSkills.set(name, body);
@@ -584,9 +591,9 @@ export class AgentRuntime {
   private buildForkHost(
     handle: Handle,
     meta: { name: string; description: string; model?: string } | null,
-    onPermissionRequest: Remote.Server.RunCallbacks["onPermissionRequest"],
-  ): Skills.SkillForkHost {
-    const definition: Subagent.Definition.AgentDefinition = {
+    onPermissionRequest: RunCallbacks["onPermissionRequest"],
+  ): SkillForkHost {
+    const definition: AgentDefinition = {
       name: meta?.name ?? "skill",
       description: meta?.description ?? "Read-only skill subagent for the chat agent",
       ...(meta?.model ? { model: meta.model } : {}),
@@ -600,10 +607,10 @@ export class AgentRuntime {
         handle.conv
           .getMessages()
           .slice(-count)
-          .map((message) => `[${message.role}] ${Utils.contentToText(message.content)}`)
+          .map((message) => `[${message.role}] ${contentToText(message.content)}`)
           .join("\n"),
       runSubagent: (prompt, abortSignal, context) =>
-        Subagent.Spawn.spawnSubagent(
+        spawnSubagent(
           definition,
           prompt,
           handle.client,
@@ -639,7 +646,7 @@ export class AgentRuntime {
     this.notifyAll("agent/system", { message: `Running skill "${name}" in fork mode…` });
     try {
       const forkHost = this.buildForkHost(handle, skill.meta, this.makePermissionCallback());
-      const result = await Skills.Executor.runFork(skill, args, forkHost, controller.signal);
+      const result = await runFork(skill, args, forkHost, controller.signal);
       const text = result.trim();
       if (text !== "") {
         this.notifyAll("agent/stream_text", { text });
@@ -667,7 +674,7 @@ export class AgentRuntime {
 
   /* ------------------------------- interactions ------------------------------- */
 
-  private makePermissionCallback(): Remote.Server.RunCallbacks["onPermissionRequest"] {
+  private makePermissionCallback(): RunCallbacks["onPermissionRequest"] {
     return async (toolName, args, decision, _toolCallId, signal, source) => {
       // Remote-parity description: subagent source + rule reason + tool action.
       const parts: string[] = [];
@@ -751,16 +758,9 @@ function safeSegment(userId: string): string {
   return cleaned === "" ? "anonymous" : cleaned;
 }
 
-function normalizeMode(mode: string): Permissions.PermissionMode {
-  const known: Permissions.PermissionMode[] = [
-    "default",
-    "acceptEdits",
-    "plan",
-    "bypassPermissions",
-  ];
-  return known.includes(mode as Permissions.PermissionMode)
-    ? (mode as Permissions.PermissionMode)
-    : "default";
+function normalizeMode(mode: string): PermissionMode {
+  const known: PermissionMode[] = ["default", "acceptEdits", "plan", "bypassPermissions"];
+  return known.includes(mode as PermissionMode) ? (mode as PermissionMode) : "default";
 }
 
 function isWrappedSystemReminder(message: ConversationMessage): boolean {
@@ -779,11 +779,11 @@ function describeError(err: unknown): string {
 }
 
 /**
- * Console-backed EventLogger for Remote.Log.AgentEventLogger. Emits one JSON
+ * Console-backed EventLogger for AgentEventLogger. Emits one JSON
  * line per noteworthy event with the owning user attached, so interleaved
  * multi-user streams stay attributable.
  */
-function consoleEventLogger(userId: string): Remote.Log.EventLogger {
+function consoleEventLogger(userId: string): EventLogger {
   const write =
     (level: "warn" | "error") =>
     (obj: Record<string, unknown>): void => {

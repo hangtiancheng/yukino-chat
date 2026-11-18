@@ -27,11 +27,13 @@ import { isIP } from "node:net";
 import { homedir } from "node:os";
 import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
 
-import { type Tools, Utils } from "@yukino.js/yukino";
-
-type Tool = Tools.Tool;
-type ToolResult = Tools.ToolResult;
-type ToolRegistry = Tools.Registry.ToolRegistry;
+import {
+  asErrorString,
+  isPublicIpAddress,
+  type Tool,
+  type ToolRegistry,
+  type ToolResult,
+} from "@yukino.js/yukino";
 
 /**
  * Tools the chat agent may use. This mirrors every read-category tool that
@@ -195,10 +197,7 @@ export async function assertPublicHttpUrl(input: string): Promise<void> {
   const addresses = isIP(hostname)
     ? [hostname]
     : (await lookup(hostname, { all: true, order: "verbatim" })).map((entry) => entry.address);
-  if (
-    addresses.length === 0 ||
-    addresses.some((address) => !Utils.PublicHttp.isPublicIpAddress(address))
-  ) {
+  if (addresses.length === 0 || addresses.some((address) => !isPublicIpAddress(address))) {
     throw new Error("URL resolves to a non-public network address");
   }
 }
@@ -253,7 +252,7 @@ export function containReadTools(registry: ToolRegistry, root: string): void {
           return null;
         } catch (err) {
           return {
-            output: `Error: cannot fetch ${url} — ${Utils.asErrorString(err)}`,
+            output: `Error: cannot fetch ${url} — ${asErrorString(err)}`,
             isError: true,
           };
         }

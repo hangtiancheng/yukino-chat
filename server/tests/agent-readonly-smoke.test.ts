@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { Remote } from "@yukino.js/yukino";
+import { createRemoteAgent } from "@yukino.js/yukino";
 import { describe, expect, it } from "vitest";
 
 import { containReadTools, createReadOnlyToolFilter } from "../src/agent/read-only-tools.js";
@@ -20,7 +20,7 @@ describe("read-only agent assembly", () => {
     writeFileSync(join(workDir, "hello.txt"), "hi there");
     writeFileSync(join(siblingDir, "secret.txt"), "private");
 
-    const handle = await Remote.Server.createRemoteAgent({
+    const handle = await createRemoteAgent({
       provider: {
         name: "test",
         protocol: "openai-compat",
@@ -30,7 +30,6 @@ describe("read-only agent assembly", () => {
       },
       cwd: workDir,
       enableCoordinatorMode: false,
-      forkDisabled: false,
       memoryEnabled: false,
     });
 

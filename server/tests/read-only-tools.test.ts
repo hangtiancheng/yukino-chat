@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { Tools } from "@yukino.js/yukino";
+import { type Tool, ToolRegistry, type ToolResult } from "@yukino.js/yukino";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
@@ -14,9 +14,6 @@ import {
   isPathContained,
   patternEscapes,
 } from "../src/agent/read-only-tools.js";
-
-type Tool = Tools.Tool;
-type ToolResult = Tools.ToolResult;
 
 function fakeTool(name: string, result: ToolResult): Tool & { calls: Record<string, unknown>[] } {
   const calls: Record<string, unknown>[] = [];
@@ -154,7 +151,7 @@ describe("path containment", () => {
 
 describe("containReadTools", () => {
   function makeRegistry(root: string) {
-    const registry = new Tools.Registry.ToolRegistry();
+    const registry = new ToolRegistry();
     const readFile = fakeTool("ReadFile", { output: "file body", isError: false });
     const glob = fakeTool("Glob", { output: "matches", isError: false });
     const grep = fakeTool("Grep", { output: "hits", isError: false });
