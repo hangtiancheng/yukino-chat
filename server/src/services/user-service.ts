@@ -9,6 +9,7 @@ import {
 } from "../common/ids.js";
 import { hashPassword, PasswordTooLongError, verifyPassword } from "../common/password.js";
 import { fmtYMD } from "../common/time.js";
+import { insensitiveContains } from "../database/filters.js";
 import type { PrismaDB } from "../database/prisma.js";
 import {
   ContactBeBlack,
@@ -264,8 +265,8 @@ export class UserService {
         uuid: { notIn: [ownerId, YUKINO_UUID] },
         status: UserStatusNormal,
         OR: [
-          { telephone: { contains: keyword, mode: "insensitive" } },
-          { nickname: { contains: keyword, mode: "insensitive" } },
+          { telephone: insensitiveContains(keyword) },
+          { nickname: insensitiveContains(keyword) },
         ],
       },
       take: 20,

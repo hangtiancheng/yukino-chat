@@ -1,5 +1,6 @@
 import { newGroup, newMessage } from "../common/ids.js";
 import { fmtDateTime } from "../common/time.js";
+import { insensitiveContains } from "../database/filters.js";
 import type { PrismaDB } from "../database/prisma.js";
 import type { GroupInfo } from "../generated/prisma/client.js";
 import type { ChatHub } from "../hub/chat-hub.js";
@@ -296,7 +297,7 @@ export class GroupService {
       where: {
         status: GroupStatusNormal,
         deletedAt: null,
-        name: { contains: keyword, mode: "insensitive" },
+        name: insensitiveContains(keyword),
       },
       take: 20,
     });
