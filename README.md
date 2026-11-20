@@ -346,7 +346,7 @@ Backend (`server/`):
 
 ```bash
 pnpm dev          # tsx watch src/index.ts (hot reload)
-pnpm build        # generates both Prisma clients, then tsc -p tsconfig.build.json
+pnpm build        # generates Prisma clients, typechecks, then esbuild-bundles src/index.ts to dist/index.js
 pnpm start        # node dist/index.js
 pnpm test         # vitest run
 pnpm typecheck    # tsc -b --noEmit
